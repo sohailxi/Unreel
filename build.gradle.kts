@@ -12,3 +12,12 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless) apply false
 }
+
+tasks.register<Exec>("installGitHooks") {
+    description = "Configures git to use repository hooks in .githooks for Conventional Commits validation"
+    group = "help"
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+    doLast {
+        println("Git hooks installed successfully: core.hooksPath set to .githooks")
+    }
+}

@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.asSharedFlow
  * Android implementation of [ScrollEventSource].
  * Dispatches raw [ReelEvent] streams captured from accessibility scroll events.
  */
-class AndroidScrollEventSource : ScrollEventSource {
+class AndroidScrollEventSource(replay: Int = 1) : ScrollEventSource {
 
-    private val _events = MutableSharedFlow<ReelEvent>(extraBufferCapacity = 64)
+    private val _events = MutableSharedFlow<ReelEvent>(replay = replay, extraBufferCapacity = 64)
     override val events: Flow<ReelEvent> = _events.asSharedFlow()
 
     fun emit(event: ReelEvent) {

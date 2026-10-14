@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release (e.g., v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-test:
+    name: Verify Test Suite
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run All Checks (JVM, Host, & iOS Simulator)
+        run: ./gradlew check iosSimulatorArm64Test --stacktrace
+
+  build-and-publish:
+    name: Build & Publish Release
+    needs: [verify-and-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Android Release & Debug APKs
+        run: ./gradlew :androidApp:assembleRelease :androidApp:assembleDebug --stacktrace
+
+      - name: Prepare Release Artifacts & Checksums
+        run: |
+          mkdir -p release-artifacts
+          cp androidApp/build/outputs/apk/release/*.apk release-artifacts/
+          cp androidApp/build/outputs/apk/debug/*.apk release-artifacts/
+          cd release-artifacts
+          for file in *.apk; do
+            sha256sum "$file" > "${file}.sha256"
+          done
+          ls -la
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || inputs.tag_name }}
+          name: Unreel ${{ github.ref_name || inputs.tag_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            release-artifacts/*.apk
+            release-artifacts/*.sha256
