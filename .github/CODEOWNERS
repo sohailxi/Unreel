@@ -1,0 +1,27 @@
+# Unreel Codeowners
+# Every pull request touching these paths will request review from corresponding maintainers.
+
+# Default global owner for the repository
+*                   @sohailxi
+
+# CI/CD Workflows, GitHub configurations, and Build Logic
+/.github/           @sohailxi
+/build-logic/       @sohailxi
+/*.gradle.kts       @sohailxi
+/gradle/            @sohailxi
+
+# Core Domain & Shared Architecture
+/shared/core-model/ @sohailxi
+/shared/core-time/  @sohailxi
+/shared/domain/     @sohailxi
+/shared/data/       @sohailxi
+/shared/presentation/ @sohailxi
+/shared/testing/    @sohailxi
+
+# Native Platform Applications
+/androidApp/        @sohailxi
+/iosApp/            @sohailxi
+
+# Architecture & Project Specs
+/docs/              @sohailxi
+/AGENTS.md          @sohailxi

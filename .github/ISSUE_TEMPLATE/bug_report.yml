@@ -1,0 +1,74 @@
+name: 🐛 Bug Report
+description: Create a structured bug report to help identify and fix issues in Unreel
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug! Please provide as much context as possible to help reproduce and resolve this issue following our strict TDD regression process.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Where did you observe this bug?
+      options:
+        - "Android (App / AccessibilityService / Overlay)"
+        - "iOS (App / DeviceActivity / Shield / Widgets)"
+        - "Shared KMP (Domain / Data / Presentation)"
+        - "Build & Tooling (Gradle / CI / GitHub Actions)"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment & Device Details
+      description: OS version, device model, and app commit SHA or version (e.g. Android 14 / Pixel 8 / commit abc1234).
+      placeholder: "e.g., iOS 17.5 / iPhone 15 Pro / commit 211be3b"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the problem is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Reproduction Steps
+      description: Step-by-step instructions to reproduce the issue.
+      placeholder: |
+        1. Open Instagram / YouTube Shorts / TikTok
+        2. Scroll 3 reels
+        3. Observe counter not incrementing...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What did you expect to happen versus what actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs & Diagnostic Output
+      description: Relevant logs from Kermit, Logcat, or Xcode. Remember: NEVER paste sensitive user content or on-screen text.
+      render: shell
+
+  - type: checkboxes
+    id: tdd_plan
+    attributes:
+      label: TDD Regression Test Plan
+      options:
+        - label: "I have identified or included a failing regression test case reproducing this bug"
+          required: false

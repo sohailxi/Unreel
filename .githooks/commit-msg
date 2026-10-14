@@ -1,0 +1,29 @@
+#!/bin/sh
+# Conventional Commits git commit-msg hook for Unreel
+
+commit_msg_file="$1"
+commit_msg=$(head -n 1 "$commit_msg_file")
+
+# Allow merge commits or fixups
+if echo "$commit_msg" | grep -qE '^(Merge|Revert|fixup!|squash!)'; then
+    exit 0
+fi
+
+# Regex for Conventional Commits: type(scope)?: description
+pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_-]+\))?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+    echo "\033[31m[ERROR] Invalid commit message format:\033[0m \"$commit_msg\""
+    echo ""
+    echo "Unreel requires Conventional Commits format:"
+    echo "  <type>(<scope>): <subject>"
+    echo ""
+    echo "Allowed types:"
+    echo "  feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+    echo ""
+    echo "Examples:"
+    echo "  feat(domain): implement RuleEngine evaluation"
+    echo "  fix(android): resolve accessibility service event drop"
+    echo "  test(time): add daylight savings regression test"
+    exit 1
+fi

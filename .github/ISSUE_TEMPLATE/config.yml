@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Standing Instructions & Architecture Guide
+    url: https://github.com/sohailxi/Unreel/blob/main/AGENTS.md
+    about: Review domain rules, ports & adapters architecture, and Phase 0 spike specifications.
+  - name: Contributing Guidelines
+    url: https://github.com/sohailxi/Unreel/blob/main/CONTRIBUTING.md
+    about: Read before opening PRs or contributing code.

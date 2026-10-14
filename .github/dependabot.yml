@@ -1,15 +1,45 @@
 version: 2
 updates:
+  # Maintain GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
     commit-message:
-      prefix: "ci"
+      prefix: "ci(deps)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
 
+  # Maintain Gradle & Kotlin dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
     commit-message:
-      prefix: "chore"
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "gradle"
+    open-pull-requests-limit: 5
+    groups:
+      kotlin-ecosystem:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.compose*"
+      androidx:
+        patterns:
+          - "androidx.*"
+      testing:
+        patterns:
+          - "*test*"
+          - "io.kotest*"
+          - "app.cash.turbine"
+          - "org.robolectric*"

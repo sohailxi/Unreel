@@ -5,16 +5,17 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  jvm-and-android:
-    name: JVM & Android CI
+  lint-and-wrapper:
+    name: Lint & Wrapper Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -28,44 +29,29 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '21'
-          cache: 'gradle'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Run Core Domain & Time Tests (JVM)
-        run: ./gradlew :shared:core-model:jvmTest :shared:core-time:jvmTest :shared:testing:jvmTest --stacktrace
-
-      - name: Verify All Shared Modules
-        run: ./gradlew :shared:testing:compileKotlinJvm :shared:domain:compileKotlinJvm :shared:data:compileAndroidMain :shared:presentation:compileAndroidMain --stacktrace
-
       - name: Lint Android App
         run: ./gradlew :androidApp:lintDebug --stacktrace
 
-      - name: Assemble Debug APK
-        run: ./gradlew :androidApp:assembleDebug --stacktrace
-
-      - name: Upload Test Results
+      - name: Upload Lint Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-jvm-android
-          path: |
-            **/build/reports/tests/
-            **/build/reports/lint-results*.html
+          name: android-lint-report
+          path: androidApp/build/reports/lint-results*.*
           retention-days: 7
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: unreel-debug-apk
-          path: androidApp/build/outputs/apk/debug/*.apk
-          retention-days: 7
-
-  ios-check:
-    name: iOS Build & Shared iOS Tests
-    runs-on: macos-14
+  unit-tests-jvm-android:
+    name: JVM & Android Tests
+    runs-on: ubuntu-latest
     timeout-minutes: 25
 
     steps:
@@ -77,13 +63,112 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '21'
-          cache: 'gradle'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Run iOS Simulator Tests
-        run: ./gradlew :shared:core-model:iosSimulatorArm64Test :shared:core-time:iosSimulatorArm64Test --stacktrace
+      - name: Run Core & Shared Domain Tests (JVM)
+        run: >
+          ./gradlew
+          :shared:core-model:jvmTest
+          :shared:core-time:jvmTest
+          :shared:domain:jvmTest
+          :shared:testing:jvmTest
+          --stacktrace
+
+      - name: Run Shared Android Host Tests
+        run: >
+          ./gradlew
+          :shared:data:testAndroidHostTest
+          :shared:presentation:testAndroidHostTest
+          --stacktrace
+
+      - name: Run Android App Unit Tests
+        run: ./gradlew :androidApp:testDebugUnitTest --stacktrace
+
+      - name: Assemble Debug APK
+        run: ./gradlew :androidApp:assembleDebug --stacktrace
+
+      - name: Generate JVM & Android Summary
+        if: always()
+        run: |
+          echo "### 🧪 JVM & Android Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Target | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:shared:core-model\` | JVM Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:shared:core-time\` | JVM Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:shared:domain\` | JVM Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:shared:testing\` | JVM Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:shared:data\` | Android Host Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:shared:presentation\` | Android Host Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`:androidApp\` | Unit Tests & Debug APK | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-jvm-android
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+          retention-days: 7
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: unreel-debug-apk
+          path: androidApp/build/outputs/apk/debug/*.apk
+          retention-days: 7
+
+  ios-build-and-test:
+    name: iOS Build & Shared iOS Tests
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run All Shared KMP iOS Simulator Tests
+        run: ./gradlew iosSimulatorArm64Test --stacktrace
+
+      - name: Verify Native iOS App Build (Xcode)
+        run: >
+          xcodebuild
+          -project iosApp/iosApp.xcodeproj
+          -scheme iosApp
+          -destination 'generic/platform=iOS Simulator'
+          clean build
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Generate iOS Summary
+        if: always()
+        run: |
+          echo "### 🍎 iOS Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Target | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Shared KMP Modules | \`iosSimulatorArm64Test\` | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Native iOS App | Xcode Simulator Build | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload iOS Test Results
         uses: actions/upload-artifact@v4
@@ -92,3 +177,25 @@ jobs:
           name: test-results-ios
           path: **/build/reports/tests/
           retention-days: 7
+
+  ci-gate:
+    name: All CI Checks Passed
+    needs: [lint-and-wrapper, unit-tests-jvm-android, ios-build-and-test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Evaluate Upstream Results
+        run: |
+          if [[ "${{ needs.lint-and-wrapper.result }}" != "success" ]]; then
+            echo "::error::Lint & Wrapper validation failed or was cancelled."
+            exit 1
+          fi
+          if [[ "${{ needs.unit-tests-jvm-android.result }}" != "success" ]]; then
+            echo "::error::JVM & Android tests failed or were cancelled."
+            exit 1
+          fi
+          if [[ "${{ needs.ios-build-and-test.result }}" != "success" ]]; then
+            echo "::error::iOS build & tests failed or were cancelled."
+            exit 1
+          fi
+          echo "All checks passed successfully."

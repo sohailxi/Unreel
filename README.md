@@ -67,14 +67,17 @@ Unreel enforces strict TDD operating principles:
 ### Running Tests
 
 ```bash
-# Run JVM unit tests for shared core modules
-./gradlew :shared:core-model:jvmTest :shared:core-time:jvmTest
+# Run all shared JVM unit tests
+./gradlew :shared:core-model:jvmTest :shared:core-time:jvmTest :shared:domain:jvmTest :shared:testing:jvmTest
 
-# Run all verification tasks across the project
+# Run shared Android host tests and app unit tests
+./gradlew :shared:data:testAndroidHostTest :shared:presentation:testAndroidHostTest :androidApp:testDebugUnitTest
+
+# Run all iOS simulator unit tests (macOS only)
+./gradlew iosSimulatorArm64Test
+
+# Run all checks across the project (lint + all tests)
 ./gradlew check
-
-# Run iOS simulator tests (macOS only)
-./gradlew :shared:core-model:iosSimulatorArm64Test :shared:core-time:iosSimulatorArm64Test
 ```
 
 ### Building Applications
@@ -89,9 +92,15 @@ open iosApp/iosApp.xcodeproj
 
 ---
 
-## 🤝 Contributing
+## 🔒 Security & Privacy
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/) for all commit messages:
+Unreel is strictly privacy-preserving with local-only persistence and zero screen-text capture. Read our [SECURITY.md](./SECURITY.md) for full details.
+
+---
+
+## 🤝 Contributing & Repository Management
+
+We follow strict TDD and [Conventional Commits](https://www.conventionalcommits.org/):
 
 - `feat:` New user-facing feature
 - `fix:` Bug fix
@@ -101,4 +110,4 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) for all c
 - `ci:` Changes to CI/CD workflows and repository automation
 - `chore:` Changes to build process or auxiliary tools
 
-Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md) and use the PR template for all pull requests.
+Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for pull request guidelines and [docs/GITHUB_SETUP.md](./docs/GITHUB_SETUP.md) for repository settings, branch protection rules, and CI automation.

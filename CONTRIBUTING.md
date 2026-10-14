@@ -55,7 +55,27 @@ All commits must follow the Conventional Commits specification:
 ## 📋 Pull Request Checklist
 
 Before submitting a Pull Request:
-1. Run `./gradlew :shared:core-model:jvmTest :shared:core-time:jvmTest` to ensure all tests pass.
-2. Run `./gradlew :androidApp:assembleDebug` to ensure the Android app builds cleanly.
-3. Keep changesets small and reviewable (< 400 lines changed per PR).
-4. Fill out all sections in the pull request template.
+1. Ensure all shared JVM unit tests pass:
+   ```bash
+   ./gradlew :shared:core-model:jvmTest :shared:core-time:jvmTest :shared:domain:jvmTest :shared:testing:jvmTest
+   ```
+2. Ensure Android host tests and unit tests pass:
+   ```bash
+   ./gradlew :shared:data:testAndroidHostTest :shared:presentation:testAndroidHostTest :androidApp:testDebugUnitTest
+   ```
+3. Verify Android Lint and build:
+   ```bash
+   ./gradlew :androidApp:lintDebug :androidApp:assembleDebug
+   ```
+4. Ensure iOS tests pass (on macOS):
+   ```bash
+   ./gradlew iosSimulatorArm64Test
+   ```
+5. Keep changesets small and reviewable (< ~400 lines changed per PR).
+6. Fill out all sections in the pull request template.
+
+### Local Git Hooks (Recommended)
+To automatically validate your commit messages locally against the Conventional Commits specification before committing:
+```bash
+git config core.hooksPath .githooks
+```

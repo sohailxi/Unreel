@@ -1,0 +1,51 @@
+name: 🔬 Spike Proposal
+description: Propose a timeboxed technical investigation or feasibility spike (Phase 0 go/no-go)
+title: "[SPIKE]: "
+labels: ["spike", "research"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Spikes are strictly timeboxed investigations (typically 1-day limit) aimed at answering a concrete technical question or validating an OS limitation before architecture commitments.
+
+  - type: input
+    id: spike_id
+    attributes:
+      label: Spike ID & Title
+      placeholder: "e.g., S1: iOS usage ticks at 1-minute increments"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis & Objective
+      description: What specific question, capability, or API constraint does this spike explore?
+    validations:
+      required: true
+
+  - type: input
+    id: timebox
+    attributes:
+      label: Timebox Duration
+      placeholder: "1 day (standard maximum for Phase 0 spikes)"
+      value: "1 day"
+    validations:
+      required: true
+
+  - type: textarea
+    id: success_criteria
+    attributes:
+      label: Go / No-Go Decision Criteria
+      description: What concrete findings or measurements determine a "Go" vs "No-Go"?
+      placeholder: "Go: DeviceActivityMonitor fires reliably at 1-min intervals. No-Go: Throttled to 15+ minutes."
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: What artifacts will be produced (e.g., JSON accessibility fixture, spike demo branch, ADR in docs/adr/)?
+    validations:
+      required: true

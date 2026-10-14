@@ -1,0 +1,54 @@
+name: 🚀 Feature Request
+description: Propose a new capability, enhancement, or improvement for Unreel
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the proposed feature and how it adheres to Unreel's core tenets: privacy first (zero screen-reading telemetry), pure Kotlin domain, and clean platform boundaries.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What user problem or friction are you trying to solve?
+      placeholder: "As a user, I find myself compulsively scrolling reels on ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform_scope
+    attributes:
+      label: Platform Scope
+      description: Which platforms are impacted by this change?
+      options:
+        - "Cross-Platform (Shared Domain / Data / Presentation)"
+        - "Android Specific (AccessibilityService, Overlay, Glance Widgets)"
+        - "iOS Specific (DeviceActivity, Shield, WidgetKit, ActivityKit)"
+        - "DevOps / Infrastructure / Build Tooling"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: architectural_compliance
+    attributes:
+      label: Architecture & Privacy Checklist
+      description: Verify compliance with AGENTS.md rules
+      options:
+        - label: "Does not require inspecting, storing, or transmitting on-screen user text or video content"
+          required: true
+        - label: "Keeps domain layer pure Kotlin (no Android or Apple platform imports)"
+          required: true
+        - label: "Platform differences respect EXACT (Android) vs ESTIMATED (iOS) source distinctions"
+          required: true
+        - label: "Includes an Architecture Decision Record (ADR in docs/adr/) if modifying core architecture"
+          required: false
