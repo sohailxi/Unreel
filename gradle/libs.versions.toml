@@ -52,7 +52,7 @@ mockk = "1.14.0"
 # Static Analysis
 detekt = "1.23.7"
 spotless = "7.0.2"
-kover = "0.9.1"
+kover = "0.9.11"
 
 # Material
 material3 = "1.12.0-alpha03"
