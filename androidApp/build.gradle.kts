@@ -21,6 +21,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.android)
+    implementation(libs.datetime)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.kermit)
@@ -29,6 +30,13 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    testImplementation(project(":shared:testing"))
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.koin.test)
 }
 
 android {
