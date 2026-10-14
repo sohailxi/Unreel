@@ -23,7 +23,7 @@ datetime = "0.6.2"
 serialization = "1.8.1"
 
 # Database
-sqldelight = "2.0.2"
+sqldelight = "2.4.1"
 
 # DI
 koin = "4.1.0"
