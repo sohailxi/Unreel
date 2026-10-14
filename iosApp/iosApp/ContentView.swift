@@ -1,18 +1,23 @@
-import UIKit
 import SwiftUI
 import Shared
 
-struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Self.Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Self.Context) {}
-}
-
 struct ContentView: View {
     var body: some View {
-        ComposeView()
-            .ignoresSafeArea()
+        VStack(spacing: 12) {
+            Image(systemName: "timer")
+                .font(.system(size: 48))
+                .foregroundStyle(.tint)
+            Text("Unreel")
+                .font(.title)
+                .bold()
+            Text("Know your scroll. Reclaim your time.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
     }
+}
+
+#Preview {
+    ContentView()
 }
