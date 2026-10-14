@@ -20,15 +20,8 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.kotlin.plugin.serialization")
 
             extensions.configure<KotlinMultiplatformExtension> {
-                listOf(
-                    iosArm64(),
-                    iosSimulatorArm64()
-                ).forEach { iosTarget ->
-                    iosTarget.binaries.framework {
-                        baseName = project.name
-                        isStatic = true
-                    }
-                }
+                iosArm64()
+                iosSimulatorArm64()
 
                 sourceSets.apply {
                     commonMain.dependencies {

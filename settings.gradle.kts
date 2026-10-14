@@ -32,6 +32,7 @@ dependencyResolutionManagement {
 include(":androidApp")
 
 // Shared modules
+include(":shared")
 include(":shared:core-model")
 include(":shared:core-time")
 include(":shared:domain")
