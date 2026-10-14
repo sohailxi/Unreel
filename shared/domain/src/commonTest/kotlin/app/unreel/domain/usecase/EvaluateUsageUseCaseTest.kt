@@ -42,6 +42,7 @@ class EvaluateUsageUseCaseTest {
         override suspend fun recordUsageTick(tick: UsageTick) {}
         override suspend fun getDailyUsage(date: LocalDate, appId: String?): DailyUsage? = dailyUsage
         override fun observeDailyUsage(date: LocalDate, appId: String?): Flow<DailyUsage?> = flowOf(dailyUsage)
+        override suspend fun saveDailyUsage(dailyUsage: DailyUsage) { this.dailyUsage = dailyUsage }
         override suspend fun getDailyUsageHistory(from: LocalDate, to: LocalDate, appId: String?): List<DailyUsage> = emptyList()
         override suspend fun getActiveSession(appId: String): Session? = activeSession
         override suspend fun saveSession(session: Session) { activeSession = session }

@@ -16,6 +16,7 @@ interface UsageRepository {
 
     suspend fun getDailyUsage(date: LocalDate, appId: String? = null): DailyUsage?
     fun observeDailyUsage(date: LocalDate, appId: String? = null): Flow<DailyUsage?>
+    suspend fun saveDailyUsage(dailyUsage: DailyUsage)
 
     suspend fun getDailyUsageHistory(from: LocalDate, to: LocalDate, appId: String? = null): List<DailyUsage>
 
