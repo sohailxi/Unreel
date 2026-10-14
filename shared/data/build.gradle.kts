@@ -1,5 +1,6 @@
 plugins {
     id("unreel.kmp.library")
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -7,6 +8,7 @@ kotlin {
         namespace = "app.unreel.data"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+        withHostTest { }
     }
 
     sourceSets {
@@ -26,6 +28,18 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(project(":shared:testing"))
+            implementation(libs.multiplatformSettings.test)
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.sqldelight.jvm)
+        }
+    }
+}
+
+sqldelight {
+    databases {
+        create("UnreelDatabase") {
+            packageName.set("app.unreel.data.db")
         }
     }
 }

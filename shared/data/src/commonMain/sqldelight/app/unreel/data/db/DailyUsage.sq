@@ -1,0 +1,52 @@
+CREATE TABLE daily_usage_record (
+    local_date TEXT NOT NULL,
+    app_id TEXT NOT NULL,
+    reels INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    sessions INTEGER NOT NULL,
+    opens INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    PRIMARY KEY (local_date, app_id)
+);
+
+CREATE INDEX idx_daily_usage_date ON daily_usage_record(local_date);
+
+upsertDailyUsage:
+INSERT OR REPLACE INTO daily_usage_record(local_date, app_id, reels, duration_ms, sessions, opens, source)
+VALUES (:localDate, :appId, :reels, :durationMs, :sessions, :opens, :source);
+
+getDailyUsageForApp:
+SELECT * FROM daily_usage_record
+WHERE local_date = :localDate AND app_id = :appId;
+
+getDailyUsageAggregated:
+SELECT
+    local_date,
+    'ALL' AS app_id,
+    CAST(COALESCE(SUM(reels), 0) AS INTEGER) AS reels,
+    CAST(COALESCE(SUM(duration_ms), 0) AS INTEGER) AS duration_ms,
+    CAST(COALESCE(SUM(sessions), 0) AS INTEGER) AS sessions,
+    CAST(COALESCE(SUM(opens), 0) AS INTEGER) AS opens,
+    COALESCE(MAX(source), 'EXACT') AS source
+FROM daily_usage_record
+WHERE local_date = :localDate
+GROUP BY local_date;
+
+getDailyUsageHistoryForApp:
+SELECT * FROM daily_usage_record
+WHERE app_id = :appId AND local_date >= :from AND local_date <= :to
+ORDER BY local_date ASC;
+
+getDailyUsageHistoryAggregated:
+SELECT
+    local_date,
+    'ALL' AS app_id,
+    CAST(COALESCE(SUM(reels), 0) AS INTEGER) AS reels,
+    CAST(COALESCE(SUM(duration_ms), 0) AS INTEGER) AS duration_ms,
+    CAST(COALESCE(SUM(sessions), 0) AS INTEGER) AS sessions,
+    CAST(COALESCE(SUM(opens), 0) AS INTEGER) AS opens,
+    COALESCE(MAX(source), 'EXACT') AS source
+FROM daily_usage_record
+WHERE local_date >= :from AND local_date <= :to
+GROUP BY local_date
+ORDER BY local_date ASC;

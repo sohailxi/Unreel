@@ -1,0 +1,38 @@
+CREATE TABLE session_record (
+    id TEXT NOT NULL PRIMARY KEY,
+    app_id TEXT NOT NULL,
+    start_utc TEXT NOT NULL,
+    end_utc TEXT NOT NULL,
+    reel_count INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX idx_session_app_active ON session_record(app_id, is_active);
+CREATE INDEX idx_session_start ON session_record(start_utc DESC);
+
+insertSession:
+INSERT OR REPLACE INTO session_record(id, app_id, start_utc, end_utc, reel_count, duration_ms, source, is_active)
+VALUES (:id, :appId, :startUtc, :endUtc, :reelCount, :durationMs, :source, :isActive);
+
+updateSession:
+UPDATE session_record
+SET end_utc = :endUtc, reel_count = :reelCount, duration_ms = :durationMs, is_active = :isActive
+WHERE id = :id;
+
+endSession:
+UPDATE session_record
+SET is_active = 0
+WHERE id = :id;
+
+getActiveSession:
+SELECT * FROM session_record
+WHERE app_id = :appId AND is_active = 1
+ORDER BY start_utc DESC
+LIMIT 1;
+
+getRecentSessions:
+SELECT * FROM session_record
+ORDER BY start_utc DESC
+LIMIT :limit;

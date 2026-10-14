@@ -1,0 +1,28 @@
+CREATE TABLE reel_event (
+    id TEXT NOT NULL PRIMARY KEY,
+    app_id TEXT NOT NULL,
+    ts_utc TEXT NOT NULL,
+    dwell_ms INTEGER NOT NULL,
+    source TEXT NOT NULL
+);
+
+CREATE INDEX idx_reel_event_app_ts ON reel_event(app_id, ts_utc);
+CREATE INDEX idx_reel_event_ts ON reel_event(ts_utc);
+
+insertEvent:
+INSERT OR REPLACE INTO reel_event(id, app_id, ts_utc, dwell_ms, source)
+VALUES (:id, :appId, :tsUtc, :dwellMs, :source);
+
+selectEventsForApp:
+SELECT * FROM reel_event
+WHERE app_id = :appId
+ORDER BY ts_utc ASC;
+
+selectEventsBetween:
+SELECT * FROM reel_event
+WHERE ts_utc >= :startUtc AND ts_utc < :endUtc
+ORDER BY ts_utc ASC;
+
+countEventsBetween:
+SELECT COUNT(*) FROM reel_event
+WHERE ts_utc >= :startUtc AND ts_utc < :endUtc;

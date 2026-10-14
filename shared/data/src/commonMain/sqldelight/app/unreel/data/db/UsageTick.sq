@@ -1,0 +1,24 @@
+CREATE TABLE usage_tick (
+    id TEXT NOT NULL PRIMARY KEY,
+    app_id TEXT NOT NULL,
+    ts_utc TEXT NOT NULL,
+    active_seconds INTEGER NOT NULL,
+    source TEXT NOT NULL
+);
+
+CREATE INDEX idx_usage_tick_app_ts ON usage_tick(app_id, ts_utc);
+CREATE INDEX idx_usage_tick_ts ON usage_tick(ts_utc);
+
+insertTick:
+INSERT OR REPLACE INTO usage_tick(id, app_id, ts_utc, active_seconds, source)
+VALUES (:id, :appId, :tsUtc, :activeSeconds, :source);
+
+selectTicksForApp:
+SELECT * FROM usage_tick
+WHERE app_id = :appId
+ORDER BY ts_utc ASC;
+
+selectTicksBetween:
+SELECT * FROM usage_tick
+WHERE ts_utc >= :startUtc AND ts_utc < :endUtc
+ORDER BY ts_utc ASC;
