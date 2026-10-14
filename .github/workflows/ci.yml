@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jvm-and-android:
+    name: JVM & Android CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run Core Domain & Time Tests (JVM)
+        run: ./gradlew :shared:core-model:jvmTest :shared:core-time:jvmTest :shared:testing:jvmTest --stacktrace
+
+      - name: Verify All Shared Modules
+        run: ./gradlew :shared:testing:compileKotlinJvm :shared:domain:compileKotlinJvm :shared:data:compileAndroidMain :shared:presentation:compileAndroidMain --stacktrace
+
+      - name: Lint Android App
+        run: ./gradlew :androidApp:lintDebug --stacktrace
+
+      - name: Assemble Debug APK
+        run: ./gradlew :androidApp:assembleDebug --stacktrace
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-jvm-android
+          path: |
+            **/build/reports/tests/
+            **/build/reports/lint-results*.html
+          retention-days: 7
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: unreel-debug-apk
+          path: androidApp/build/outputs/apk/debug/*.apk
+          retention-days: 7
+
+  ios-check:
+    name: iOS Build & Shared iOS Tests
+    runs-on: macos-14
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run iOS Simulator Tests
+        run: ./gradlew :shared:core-model:iosSimulatorArm64Test :shared:core-time:iosSimulatorArm64Test --stacktrace
+
+      - name: Upload iOS Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-ios
+          path: **/build/reports/tests/
+          retention-days: 7
