@@ -84,4 +84,14 @@ class AndroidAppModuleTest : KoinTest {
         val rulesViewModel = get<RulesViewModel>()
         assertNotNull(rulesViewModel)
     }
+
+    @Test
+    fun `androidAppModule provides AppClock without overrides`() {
+        stopKoin()
+        startKoin {
+            modules(androidAppModule)
+        }
+        val clock = get<AppClock>()
+        assertNotNull(clock)
+    }
 }
