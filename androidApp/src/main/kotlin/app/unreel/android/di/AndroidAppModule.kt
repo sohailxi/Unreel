@@ -3,9 +3,11 @@ package app.unreel.android.di
 import app.unreel.android.platform.AndroidLiveSurfacePublisher
 import app.unreel.android.platform.AndroidNotificationPort
 import app.unreel.android.platform.AndroidOverlayEnforcer
+import app.unreel.android.platform.AndroidScrollEventSource
 import app.unreel.domain.port.Enforcer
 import app.unreel.domain.port.LiveSurfacePublisher
 import app.unreel.domain.port.NotificationPort
+import app.unreel.domain.port.ScrollEventSource
 import app.unreel.domain.usecase.IngestReelEventUseCase
 import app.unreel.domain.usecase.IngestUsageTickUseCase
 import org.koin.android.ext.koin.androidContext
@@ -21,6 +23,9 @@ val androidAppModule: Module = module {
 
     single { AndroidLiveSurfacePublisher() }
     single<LiveSurfacePublisher> { get<AndroidLiveSurfacePublisher>() }
+
+    single { AndroidScrollEventSource() }
+    single<ScrollEventSource> { get<AndroidScrollEventSource>() }
 
     single<NotificationPort> { AndroidNotificationPort(context = runCatching { androidContext() }.getOrNull()) }
 
