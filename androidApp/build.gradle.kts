@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.android)
     implementation(libs.datetime)
+    implementation(libs.multiplatformSettings)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.kermit)
