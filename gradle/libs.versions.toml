@@ -1,7 +1,7 @@
 [versions]
 # Core
 agp = "9.4.1"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 composeMultiplatform = "1.12.1"
 
 # Android SDK
@@ -18,9 +18,9 @@ androidx-glance = "1.1.1"
 androidx-work = "2.10.1"
 
 # KotlinX
-coroutines = "1.10.2"
-datetime = "0.6.2"
-serialization = "1.8.1"
+coroutines = "1.11.0"
+datetime = "0.8.0"
+serialization = "1.11.0"
 
 # Database
 sqldelight = "2.0.2"
@@ -52,10 +52,10 @@ mockk = "1.14.0"
 # Static Analysis
 detekt = "1.23.7"
 spotless = "7.0.2"
-kover = "0.9.1"
+kover = "0.9.11"
 
 # Material
-material3 = "1.12.0-alpha03"
+material3 = "1.13.0-alpha02"
 
 [libraries]
 # Kotlin
