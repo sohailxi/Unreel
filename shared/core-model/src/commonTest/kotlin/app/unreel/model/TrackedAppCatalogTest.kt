@@ -18,7 +18,7 @@ class TrackedAppCatalogTest {
     }
 
     @Test
-    fun `short video platforms include Instagram, YouTube Shorts, TikTok, Snapchat, Facebook, and emerging reel apps`() {
+    fun `short video platforms include Instagram YouTube Shorts TikTok Snapchat Facebook and emerging reel apps`() {
         val shortVideoApps = TrackedAppCatalog.getAppsByCategory(TrackedAppCatalog.CATEGORY_SHORT_VIDEO)
         val names = shortVideoApps.map { it.displayName }
 
@@ -33,7 +33,7 @@ class TrackedAppCatalogTest {
     }
 
     @Test
-    fun `scrolling platforms include Reddit, X Twitter, Threads, Pinterest, and Bluesky`() {
+    fun `scrolling platforms include Reddit X Twitter Threads Pinterest and Bluesky`() {
         val scrollingApps = TrackedAppCatalog.getAppsByCategory(TrackedAppCatalog.CATEGORY_FEED_SCROLLING)
         val names = scrollingApps.map { it.displayName }
 
