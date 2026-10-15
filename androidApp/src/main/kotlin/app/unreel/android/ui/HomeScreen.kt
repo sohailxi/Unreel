@@ -173,6 +173,7 @@ fun HomeScreen(
             }
         },
         onRequestIgnoreBatteryOptimization = { permissionManager.requestIgnoreBatteryOptimizations() },
+        onOpenAutostart = { permissionManager.openAutostartSettings() },
         onToggleService = {
             if (permissionStatus.isServiceRunning) {
                 permissionManager.stopMonitoringService()
@@ -194,6 +195,7 @@ fun HomeScreenContent(
     onGrantOverlay: () -> Unit = {},
     onRequestNotification: () -> Unit = {},
     onRequestIgnoreBatteryOptimization: () -> Unit = {},
+    onOpenAutostart: () -> Unit = {},
     onToggleService: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -268,6 +270,7 @@ fun HomeScreenContent(
             onGrantOverlay = onGrantOverlay,
             onRequestNotification = onRequestNotification,
             onRequestIgnoreBatteryOptimization = onRequestIgnoreBatteryOptimization,
+            onOpenAutostart = onOpenAutostart,
             onToggleService = onToggleService,
         )
 
@@ -632,6 +635,7 @@ fun ServiceStatusCard(
     onGrantOverlay: () -> Unit,
     onRequestNotification: () -> Unit,
     onRequestIgnoreBatteryOptimization: () -> Unit,
+    onOpenAutostart: () -> Unit = {},
     onToggleService: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -795,6 +799,18 @@ fun ServiceStatusCard(
                         actionLabel = "Disable Saver",
                         onAction = onRequestIgnoreBatteryOptimization,
                     )
+
+                    // 5. OEM Autostart (if applicable)
+                    if (status.isAggressiveOem) {
+                        PermissionRow(
+                            title = "Background Autostart (${status.deviceManufacturer})",
+                            description = "Required on ${status.deviceManufacturer} devices to keep the scroll counter from being killed in the background.",
+                            icon = Icons.Rounded.PowerSettingsNew,
+                            isGranted = status.isBatteryOptimizationIgnored,
+                            actionLabel = "Enable Autostart",
+                            onAction = onOpenAutostart,
+                        )
+                    }
                 }
             }
         }

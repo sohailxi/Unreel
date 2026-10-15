@@ -79,4 +79,26 @@ class AndroidPermissionManagerTest {
         assertFalse(UnreelForegroundService.isRunning.value)
         assertFalse(ReelDetectorService.isConnected.value)
     }
+
+    @Test
+    fun `isManufacturerAggressive correctly identifies aggressive OEM brands`() {
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("Xiaomi"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("redmi"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("Poco"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("Samsung"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("OPPO"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("Vivo"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("OnePlus"))
+        assertTrue(AndroidPermissionManager.isManufacturerAggressive("Huawei"))
+        assertFalse(AndroidPermissionManager.isManufacturerAggressive("Google"))
+        assertFalse(AndroidPermissionManager.isManufacturerAggressive("Motorola"))
+    }
+
+    @Test
+    fun `openAutostartSettings handles null context without throwing`() {
+        val manager = AndroidPermissionManager(context = null)
+        manager.openAutostartSettings()
+        kotlin.test.assertNotNull(manager.getDeviceManufacturer())
+    }
 }
+

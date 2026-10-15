@@ -136,6 +136,7 @@ fun RulesScreen(
         onIntent = viewModel::onIntent,
         onEnableAccessibility = { permissionManager.openAccessibilitySettings() },
         onGrantOverlay = { permissionManager.openOverlaySettings() },
+        onOpenAutostart = { permissionManager.openAutostartSettings() },
         onToggleService = {
             if (permissionStatus.isServiceRunning) {
                 permissionManager.stopMonitoringService()
@@ -155,6 +156,7 @@ fun RulesScreenContent(
     onIntent: (RulesIntent) -> Unit = {},
     onEnableAccessibility: () -> Unit = {},
     onGrantOverlay: () -> Unit = {},
+    onOpenAutostart: () -> Unit = {},
     onToggleService: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -196,6 +198,7 @@ fun RulesScreenContent(
                 status = permissionStatus,
                 onEnableAccessibility = onEnableAccessibility,
                 onGrantOverlay = onGrantOverlay,
+                onOpenAutostart = onOpenAutostart,
                 onToggleService = onToggleService,
             )
         }
@@ -465,6 +468,7 @@ private fun SystemEnforcementProtectionCard(
     status: PermissionStatus,
     onEnableAccessibility: () -> Unit,
     onGrantOverlay: () -> Unit,
+    onOpenAutostart: () -> Unit = {},
     onToggleService: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -631,6 +635,40 @@ private fun SystemEnforcementProtectionCard(
                     },
                 ) {
                     Text(if (status.isServiceRunning) "Stop Service" else "Start Service", fontSize = 11.sp)
+                }
+            }
+
+            // OEM Autostart Row (if device is an aggressive OEM)
+            if (status.isAggressiveOem) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Security,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Text(
+                            text = "Background Autostart (${status.deviceManufacturer})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+
+                    FilledTonalButton(
+                        onClick = onOpenAutostart,
+                        modifier = Modifier.height(34.dp),
+                    ) {
+                        Text("Configure", fontSize = 11.sp)
+                    }
                 }
             }
         }

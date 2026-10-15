@@ -28,6 +28,8 @@ data class PermissionStatus(
     val isNotificationGranted: Boolean = false,
     val isBatteryOptimizationIgnored: Boolean = false,
     val isServiceRunning: Boolean = false,
+    val isAggressiveOem: Boolean = false,
+    val deviceManufacturer: String = "",
 ) {
     val areCorePermissionsGranted: Boolean
         get() = isAccessibilityEnabled && isOverlayGranted && isNotificationGranted
@@ -46,11 +48,14 @@ interface PermissionManager {
     fun isNotificationGranted(): Boolean
     fun isBatteryOptimizationIgnored(): Boolean
     fun isServiceRunning(): Boolean
+    fun isAggressiveOem(): Boolean
+    fun getDeviceManufacturer(): String
 
     fun openAccessibilitySettings()
     fun openOverlaySettings()
     fun openNotificationSettings()
     fun requestIgnoreBatteryOptimizations()
+    fun openAutostartSettings()
     fun startMonitoringService()
     fun stopMonitoringService()
 }
@@ -106,6 +111,14 @@ class AndroidPermissionManager(
         return UnreelForegroundService.isRunning.value
     }
 
+    override fun isAggressiveOem(): Boolean {
+        return isManufacturerAggressive(Build.MANUFACTURER)
+    }
+
+    override fun getDeviceManufacturer(): String {
+        return formatManufacturer(Build.MANUFACTURER)
+    }
+
     override fun getPermissionStatus(): PermissionStatus {
         return PermissionStatus(
             isAccessibilityEnabled = isAccessibilityEnabled(),
@@ -113,6 +126,8 @@ class AndroidPermissionManager(
             isNotificationGranted = isNotificationGranted(),
             isBatteryOptimizationIgnored = isBatteryOptimizationIgnored(),
             isServiceRunning = isServiceRunning(),
+            isAggressiveOem = isAggressiveOem(),
+            deviceManufacturer = getDeviceManufacturer(),
         )
     }
 
@@ -207,7 +222,146 @@ class AndroidPermissionManager(
         }
     }
 
+    override fun openAutostartSettings() {
+        val ctx = context ?: return
+        val manufacturer = Build.MANUFACTURER.orEmpty()
+        val intents = getOemAutostartIntents(ctx, manufacturer)
+        for (intent in intents) {
+            try {
+                ctx.startActivity(intent)
+                logger.i { "Launched autostart intent for $manufacturer" }
+                return
+            } catch (_: Throwable) {
+                // Try next candidate
+            }
+        }
+        try {
+            val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${ctx.packageName}")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            ctx.startActivity(fallbackIntent)
+        } catch (t: Throwable) {
+            logger.e(t) { "Failed to launch fallback application settings" }
+        }
+    }
+
     companion object {
+        fun formatManufacturer(manufacturer: String?): String {
+            val raw = manufacturer?.trim().orEmpty()
+            return if (raw.isNotEmpty()) {
+                raw.replaceFirstChar { it.uppercase() }
+            } else {
+                "Android"
+            }
+        }
+
+        fun isManufacturerAggressive(manufacturer: String?): Boolean {
+            val m = manufacturer?.lowercase().orEmpty()
+            return m.contains("xiaomi") || m.contains("redmi") || m.contains("poco") ||
+                m.contains("oppo") || m.contains("realme") || m.contains("oneplus") ||
+                m.contains("vivo") || m.contains("iqoo") ||
+                m.contains("huawei") || m.contains("honor") ||
+                m.contains("samsung") || m.contains("asus")
+        }
+
+        fun getOemAutostartIntents(context: Context, manufacturer: String): List<Intent> {
+            val m = manufacturer.lowercase()
+            val intents = mutableListOf<Intent>()
+
+            when {
+                m.contains("xiaomi") || m.contains("redmi") || m.contains("poco") -> {
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.miui.securitycenter",
+                                "com.miui.permcenter.autostart.AutoStartManagementActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                }
+                m.contains("oppo") || m.contains("realme") || m.contains("oneplus") -> {
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.coloros.safecenter",
+                                "com.coloros.safecenter.permission.startup.StartupAppListActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.oppo.safe",
+                                "com.oppo.safe.permission.startup.StartupAppListActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                }
+                m.contains("vivo") || m.contains("iqoo") -> {
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.iqoo.secure",
+                                "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.vivo.permissionmanager",
+                                "com.vivo.permissionmanager.activity.BgStartUpManagerActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                }
+                m.contains("huawei") || m.contains("honor") -> {
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.huawei.systemmanager",
+                                "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                }
+                m.contains("samsung") -> {
+                    intents.add(
+                        Intent().apply {
+                            component = ComponentName(
+                                "com.samsung.android.lool",
+                                "com.samsung.android.sm.ui.battery.BatteryActivity",
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        },
+                    )
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                intents.add(
+                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    },
+                )
+            }
+            intents.add(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                },
+            )
+
+            return intents
+        }
+
         fun isAccessibilityServiceRunning(
             context: Context,
             serviceClass: Class<out AccessibilityService>,
