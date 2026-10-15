@@ -73,6 +73,9 @@ struct HomeView: View {
                         if let focusScore = state.focusScore {
                             FocusScoreCardView(score: Int(focusScore.value))
                         }
+
+                        // Live Surfaces & Widget Status
+                        LiveSurfacesCardView(state: state)
                     } else {
                         ProgressView()
                             .padding(.top, 40)
@@ -340,3 +343,112 @@ private struct FocusScoreCardView: View {
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
+
+private struct LiveSurfacesCardView: View {
+    let state: HomeState
+    @ObservedObject var activityManager = ActivityKitManager.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .foregroundColor(.indigo)
+                        .font(.title3)
+                    Text("Live Surfaces")
+                        .font(.headline.weight(.bold))
+                }
+                Spacer()
+                Text("iOS 17+")
+                    .font(.caption2.weight(.medium))
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(spacing: 10) {
+                // Live Activity status row
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "iphone.gen3")
+                            .foregroundColor(.secondary)
+                            .font(.subheadline)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Dynamic Island & Lock Screen")
+                                .font(.subheadline.weight(.semibold))
+                            Text(activityManager.isLiveActivityActive ? "Active session tracking" : "Idle (starts during scroll)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Circle()
+                        .fill(activityManager.isLiveActivityActive ? Color.green : Color.secondary.opacity(0.4))
+                        .frame(width: 8, height: 8)
+                }
+
+                // WidgetKit status row
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.grid.2x2")
+                            .foregroundColor(.secondary)
+                            .font(.subheadline)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Home Screen Widgets")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Small & Medium WidgetKit timeline")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        activityManager.reloadWidgets()
+                    }) {
+                        Text("Refresh")
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Color.indigo.opacity(0.15))
+                            .foregroundColor(.indigo)
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+
+            Divider()
+
+            // Test Live Activity Button
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                if activityManager.isLiveActivityActive {
+                    activityManager.endLiveActivity()
+                } else {
+                    let progress = state.goalReels > 0 ? Float(state.totalReels) / Float(state.goalReels) : nil
+                    activityManager.startLiveActivity(
+                        appName: "Instagram Reels",
+                        sessionReels: Int(state.activeSession?.reelCount ?? 8),
+                        todayReels: Int(state.totalReels),
+                        sessionDurationMinutes: Int(max(1, state.totalDurationMs / 60_000)),
+                        limitProgress: progress
+                    )
+                }
+            }) {
+                HStack {
+                    Image(systemName: activityManager.isLiveActivityActive ? "stop.fill" : "play.fill")
+                    Text(activityManager.isLiveActivityActive ? "Stop Live Activity" : "Simulate Live Activity")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                    activityManager.isLiveActivityActive ? Color.red.opacity(0.15) : Color.indigo.opacity(0.15)
+                )
+                .foregroundColor(activityManager.isLiveActivityActive ? .red : .indigo)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+        .padding(18)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
