@@ -29,7 +29,7 @@ sqldelight = "2.0.2"
 koin = "4.1.0"
 
 # Swift Interop
-skie = "0.10.1"
+skie = "0.10.15"
 
 # Logging
 kermit = "2.0.5"
