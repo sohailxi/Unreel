@@ -3,8 +3,10 @@ package app.unreel.android.di
 import android.content.Context
 import app.unreel.android.platform.AndroidLiveSurfacePublisher
 import app.unreel.android.platform.AndroidNotificationPort
+import app.unreel.android.platform.AndroidOverlayController
 import app.unreel.android.platform.AndroidOverlayEnforcer
 import app.unreel.android.platform.AndroidScrollEventSource
+import app.unreel.android.platform.OverlayController
 import app.unreel.data.driver.AndroidDatabaseDriverFactory
 import app.unreel.data.driver.DatabaseDriverFactory
 import app.unreel.domain.port.Enforcer
@@ -40,7 +42,12 @@ val androidAppModule: Module = module {
         SharedPreferencesSettings(prefs)
     }
 
-    single { AndroidOverlayEnforcer() }
+    single<OverlayController> {
+        val context = runCatching { androidContext() }.getOrNull()
+        AndroidOverlayController(context = context)
+    }
+
+    single { AndroidOverlayEnforcer(overlayController = get()) }
     single<Enforcer> { get<AndroidOverlayEnforcer>() }
 
     single { AndroidLiveSurfacePublisher(context = runCatching { androidContext() }.getOrNull()) }

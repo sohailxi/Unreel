@@ -60,4 +60,66 @@ class AndroidOverlayEnforcerTest {
         assertEquals(Decision.Allow, enforcer.activeDecision.value)
         assertEquals(false, enforcer.isEnforcing.value)
     }
+
+    @Test
+    fun `enforce Block delegates to overlayController when provided`() = runTest {
+        val fakeController = FakeOverlayController()
+        val enforcer = AndroidOverlayEnforcer(overlayController = fakeController)
+
+        val blockDecision = Decision.Block(
+            until = null,
+            reason = "Session limit hit",
+            ruleId = "rule-4",
+            canBypass = true,
+            passesRemaining = 2,
+        )
+
+        enforcer.enforce(blockDecision)
+
+        assertTrue(fakeController.isShowing)
+        assertEquals("Session limit hit", fakeController.lastReason)
+        assertEquals(2, fakeController.lastPassesRemaining)
+
+        enforcer.clearEnforcement()
+        assertEquals(false, fakeController.isShowing)
+    }
+
+    @Test
+    fun `enforce non-Block hides overlay on overlayController`() = runTest {
+        val fakeController = FakeOverlayController()
+        val enforcer = AndroidOverlayEnforcer(overlayController = fakeController)
+
+        val blockDecision = Decision.Block(
+            until = null,
+            reason = "Session limit hit",
+            ruleId = "rule-4",
+            canBypass = false,
+            passesRemaining = 0,
+        )
+        enforcer.enforce(blockDecision)
+        assertTrue(fakeController.isShowing)
+
+        enforcer.enforce(Decision.Allow)
+        assertEquals(false, fakeController.isShowing)
+    }
+
+    private class FakeOverlayController : OverlayController {
+        var isShowing: Boolean = false
+        var lastReason: String? = null
+        var lastPassesRemaining: Int = 0
+
+        override fun showBlockingOverlay(reason: String, passesRemaining: Int, onBypass: (() -> Unit)?) {
+            isShowing = true
+            lastReason = reason
+            lastPassesRemaining = passesRemaining
+        }
+
+        override fun hideOverlay() {
+            isShowing = false
+            lastReason = null
+        }
+
+        override fun isOverlayVisible(): Boolean = isShowing
+    }
 }
+

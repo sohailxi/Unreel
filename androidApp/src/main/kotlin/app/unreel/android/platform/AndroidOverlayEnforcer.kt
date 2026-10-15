@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
  * Manages active enforcement decisions (Block, Friction, Nudge) and exposes
  * observable state for overlay UI and blocking mechanisms.
  */
-class AndroidOverlayEnforcer : Enforcer {
+class AndroidOverlayEnforcer(
+    private val overlayController: OverlayController? = null,
+) : Enforcer {
     private val _activeDecision = MutableStateFlow<Decision>(Decision.Allow)
     val activeDecision: StateFlow<Decision> = _activeDecision.asStateFlow()
 
@@ -21,10 +23,30 @@ class AndroidOverlayEnforcer : Enforcer {
     override suspend fun enforce(decision: Decision) {
         _activeDecision.value = decision
         _isEnforcing.value = decision !is Decision.Allow
+
+        when (decision) {
+            is Decision.Block -> {
+                overlayController?.showBlockingOverlay(
+                    reason = decision.reason,
+                    passesRemaining = decision.passesRemaining,
+                    onBypass = if (decision.canBypass) {
+                        {
+                            _activeDecision.value = Decision.Allow
+                            _isEnforcing.value = false
+                            overlayController.hideOverlay()
+                        }
+                    } else null,
+                )
+            }
+            else -> {
+                overlayController?.hideOverlay()
+            }
+        }
     }
 
     override suspend fun clearEnforcement() {
         _activeDecision.value = Decision.Allow
         _isEnforcing.value = false
+        overlayController?.hideOverlay()
     }
 }
