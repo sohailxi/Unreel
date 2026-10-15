@@ -74,6 +74,9 @@ class AndroidAppModuleTest : KoinTest {
 
         val tickUseCase = get<IngestUsageTickUseCase>()
         assertNotNull(tickUseCase)
+
+        val permissionManager = get<app.unreel.android.platform.PermissionManager>()
+        assertNotNull(permissionManager)
     }
 
     @Test

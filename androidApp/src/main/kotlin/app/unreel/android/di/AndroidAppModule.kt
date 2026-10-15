@@ -59,6 +59,9 @@ val androidAppModule: Module = module {
     single { app.unreel.android.detector.ReelDetectorEngine(clock = get()) }
 
     single<NotificationPort> { AndroidNotificationPort(context = runCatching { androidContext() }.getOrNull()) }
+    single<app.unreel.android.platform.PermissionManager> {
+        app.unreel.android.platform.AndroidPermissionManager(context = runCatching { androidContext() }.getOrNull())
+    }
 
     factory {
         IngestReelEventUseCase(

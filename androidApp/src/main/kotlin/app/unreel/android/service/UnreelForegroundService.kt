@@ -46,6 +46,7 @@ class UnreelForegroundService : Service(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
+        _isRunning.value = true
         logger.i { "UnreelForegroundService created" }
         createNotificationChannel(this)
     }
@@ -54,11 +55,13 @@ class UnreelForegroundService : Service(), KoinComponent {
         val action = intent?.action
         if (action == ACTION_STOP) {
             logger.i { "Stop action received, stopping foreground service" }
+            _isRunning.value = false
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
         }
 
+        _isRunning.value = true
         logger.i { "Starting UnreelForegroundService ongoing notification" }
         val initialNotification = buildNotification(
             context = this,
@@ -101,11 +104,15 @@ class UnreelForegroundService : Service(), KoinComponent {
 
     override fun onDestroy() {
         super.onDestroy()
+        _isRunning.value = false
         logger.i { "UnreelForegroundService destroyed" }
         serviceScope.cancel()
     }
 
     companion object {
+        private val _isRunning = kotlinx.coroutines.flow.MutableStateFlow(false)
+        val isRunning: kotlinx.coroutines.flow.StateFlow<Boolean> = _isRunning
+
         const val NOTIFICATION_ID = 1001
         const val CHANNEL_ID = "unreel_monitor_channel"
         const val ACTION_START = "app.unreel.android.action.START_MONITORING"

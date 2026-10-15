@@ -51,12 +51,30 @@ class ReelDetectorService : AccessibilityService(), KoinComponent {
         }
     }
 
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        _isConnected.value = true
+        logger.i { "ReelDetectorService connected" }
+    }
+
     override fun onInterrupt() {
         logger.w { "ReelDetectorService interrupted" }
     }
 
+    override fun onUnbind(intent: android.content.Intent?): Boolean {
+        _isConnected.value = false
+        logger.i { "ReelDetectorService unbound" }
+        return super.onUnbind(intent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        _isConnected.value = false
         serviceScope.cancel()
+    }
+
+    companion object {
+        private val _isConnected = kotlinx.coroutines.flow.MutableStateFlow(false)
+        val isConnected: kotlinx.coroutines.flow.StateFlow<Boolean> = _isConnected
     }
 }
