@@ -18,13 +18,13 @@ enum class OnboardingStep(
     WELCOME(
         title = "Know Your Scroll",
         subtitle = "Reclaim your time from mindless feeds",
-        description = "Unreel counts short-video scrolls on Instagram, YouTube, and TikTok to help you build digital balance. Your privacy is 100% protected: no personal data, messages, usernames, or video content are ever read or collected.",
+        description = "Unreel counts short videos and infinite feeds across Instagram, YouTube, TikTok, Reddit, X, and more to protect your digital well-being. Your privacy is 100% protected: no personal data, messages, usernames, or video contents are ever read or collected.",
         icon = Icons.Rounded.PlayCircle,
     ),
     ACCESSIBILITY(
         title = "Exact Reel Counting",
         subtitle = "Precise scroll detection on Android",
-        description = "Unreel uses Android's Accessibility service to detect reel swipe transitions in real-time. It only monitors package transitions and scroll events—never screen text, accounts, or personal information.",
+        description = "Unreel uses Android's Accessibility service to detect scroll and reel transitions across all short-video and scrolling platforms in real-time. It only monitors package transitions and scroll gestures—never screen text, accounts, or personal information.",
         icon = Icons.Rounded.Speed,
     ),
     SHIELDING(

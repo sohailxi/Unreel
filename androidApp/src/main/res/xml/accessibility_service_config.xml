@@ -9,6 +9,5 @@
     android:accessibilityFeedbackType="feedbackGeneric"
     android:notificationTimeout="100"
     android:canRetrieveWindowContent="false"
-    android:settingsActivity="app.unreel.android.MainActivity"
-    android:packageNames="com.instagram.android,com.google.android.youtube,com.zhiliaoapp.musically,com.ss.android.ugc.trill,com.snapchat.android,com.facebook.katana"
+    android:packageNames="com.instagram.android,com.instagram.lite,com.google.android.youtube,com.zhiliaoapp.musically,com.ss.android.ugc.trill,com.zhiliaoapp.musically.go,com.snapchat.android,com.facebook.katana,com.facebook.lite,com.reddit.frontpage,com.twitter.android,com.twitter.android.lite,com.instagram.barcelona,com.pinterest,xyz.blueskyweb.app,video.like,com.kwai.video,co.triller.droid,tv.twitch.android.app,com.tumblr,com.imgur.mobile"
     />

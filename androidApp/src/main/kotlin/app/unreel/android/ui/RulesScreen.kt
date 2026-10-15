@@ -519,8 +519,13 @@ private fun RuleCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    val appsDisplay = if (rule.appIds.isEmpty()) {
+                        "All short video & scrolling platforms"
+                    } else {
+                        rule.appIds.joinToString { app.unreel.model.TrackedAppCatalog.getDisplayName(it) }
+                    }
                     Text(
-                        text = "Apps: ${rule.appIds.joinToString()}",
+                        text = "Apps: $appsDisplay",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

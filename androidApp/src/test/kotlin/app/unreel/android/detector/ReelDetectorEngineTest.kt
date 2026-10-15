@@ -145,5 +145,28 @@ class ReelDetectorEngineTest {
         assertTrue(supported.contains("com.ss.android.ugc.trill"))
         assertTrue(supported.contains("com.snapchat.android"))
         assertTrue(supported.contains("com.facebook.katana"))
+        assertTrue(supported.contains("com.reddit.frontpage"))
+        assertTrue(supported.contains("com.twitter.android"))
+        assertTrue(supported.contains("com.pinterest"))
+        assertTrue(supported.contains("com.instagram.barcelona"))
+        assertTrue(supported.contains("video.like"))
+    }
+
+    @Test
+    fun `short video and scrolling platforms like Reddit and Twitter produce valid scroll events`() {
+        val redditEvent = detector.processEvent(
+            packageName = "com.reddit.frontpage",
+            eventType = AccessibilityEvent.TYPE_VIEW_SCROLLED,
+        )
+        assertNotNull(redditEvent)
+        assertEquals("com.reddit.frontpage", redditEvent.appId)
+
+        fakeClock.advanceBy(4_000L)
+        val twitterEvent = detector.processEvent(
+            packageName = "com.twitter.android",
+            eventType = AccessibilityEvent.TYPE_VIEW_SCROLLED,
+        )
+        assertNotNull(twitterEvent)
+        assertEquals("com.twitter.android", twitterEvent.appId)
     }
 }

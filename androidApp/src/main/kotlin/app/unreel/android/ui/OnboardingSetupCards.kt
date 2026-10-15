@@ -187,7 +187,7 @@ fun AccessibilitySetupCard(
             }
 
             Text(
-                text = "Android requires explicit permission for Unreel to observe scroll gestures in supported apps. Look for 'Unreel Reel Detector' under Downloaded Services and toggle it ON.",
+                text = "Android requires explicit permission for Unreel to observe scroll gestures across all short-video and scrolling apps (Instagram, YouTube, TikTok, Reddit, X, Snapchat, Facebook, and more). Look for 'Unreel Reel Detector' under Downloaded Services and toggle it ON.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 20.sp,

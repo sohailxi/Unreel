@@ -470,7 +470,7 @@ private fun ActiveSessionCard(
                             modifier = Modifier.size(18.dp),
                         )
                         Text(
-                            text = "Active Session ($appId)",
+                            text = "Active Session • ${app.unreel.model.TrackedAppCatalog.getDisplayName(appId)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,

@@ -81,13 +81,6 @@ class ReelDetectorEngine(
         const val DEFAULT_INITIAL_DWELL_MS = 2_000L
         const val MAX_DWELL_MS = 300_000L // 5 minutes max dwell per reel
 
-        val SUPPORTED_PACKAGES: Set<String> = setOf(
-            "com.instagram.android",
-            "com.google.android.youtube",
-            "com.zhiliaoapp.musically",
-            "com.ss.android.ugc.trill",
-            "com.snapchat.android",
-            "com.facebook.katana",
-        )
+        val SUPPORTED_PACKAGES: Set<String> = app.unreel.model.TrackedAppCatalog.allAndroidPackages
     }
 }
