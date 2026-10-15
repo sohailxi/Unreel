@@ -5,6 +5,7 @@ import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import app.cash.sqldelight.driver.native.wrapConnection
 import app.unreel.data.db.UnreelDatabase
 import co.touchlab.sqliter.DatabaseConfiguration
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSFileManager
 
 /**
@@ -17,9 +18,25 @@ class IosDatabaseDriverFactory(
     private val dbName: String = "unreel.db",
 ) : DatabaseDriverFactory {
 
+    @OptIn(ExperimentalForeignApi::class)
     override fun createDriver(): SqlDriver {
         val containerUrl = NSFileManager.defaultManager.containerURLForSecurityApplicationGroupIdentifier(appGroupId)
-        val basePath = containerUrl?.path
+        val basePath = containerUrl?.path ?: run {
+            val urls = NSFileManager.defaultManager.URLsForDirectory(
+                platform.Foundation.NSApplicationSupportDirectory,
+                platform.Foundation.NSUserDomainMask,
+            )
+            val appSupport = (urls.firstOrNull() as? platform.Foundation.NSURL)?.path
+            if (appSupport != null) {
+                NSFileManager.defaultManager.createDirectoryAtPath(
+                    path = appSupport,
+                    withIntermediateDirectories = true,
+                    attributes = null,
+                    error = null,
+                )
+            }
+            appSupport
+        }
 
         val configuration = DatabaseConfiguration(
             name = dbName,
@@ -38,7 +55,7 @@ class IosDatabaseDriverFactory(
         )
 
         val driver = NativeSqliteDriver(configuration)
-        driver.execute(null, "PRAGMA journal_mode = WAL;", 0)
+        driver.executeQuery(null, "PRAGMA journal_mode = WAL;", { app.cash.sqldelight.db.QueryResult.Unit }, 0)
         driver.execute(null, "PRAGMA synchronous = NORMAL;", 0)
         return driver
     }

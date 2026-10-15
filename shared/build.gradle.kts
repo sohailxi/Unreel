@@ -22,6 +22,9 @@ kotlin {
             export(project(":shared:data"))
             export(project(":shared:presentation"))
         }
+        iosTarget.binaries.all {
+            linkerOpts("-lsqlite3")
+        }
     }
 
     sourceSets {
@@ -31,6 +34,10 @@ kotlin {
             api(project(":shared:domain"))
             api(project(":shared:data"))
             api(project(":shared:presentation"))
+        }
+        iosMain.dependencies {
+            implementation(libs.multiplatformSettings)
+            implementation(libs.sqldelight.native)
         }
         commonTest.dependencies {
             implementation(project(":shared:testing"))
