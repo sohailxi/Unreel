@@ -65,8 +65,48 @@ import app.unreel.presentation.home.HomeIntent
 import app.unreel.presentation.home.HomeState
 import app.unreel.presentation.home.HomeViewModel
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
+import androidx.compose.material.icons.rounded.BatteryChargingFull
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.PowerSettingsNew
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.unreel.android.platform.PermissionManager
+import app.unreel.android.platform.PermissionStatus
+import app.unreel.android.service.ReelDetectorService
+import app.unreel.android.service.UnreelForegroundService
+import org.koin.compose.koinInject
+
 val HomeState.isRestricted: Boolean
     get() = currentDecision is Decision.Block || currentDecision is Decision.Friction
+
+fun getServiceStatusHeader(status: PermissionStatus): Pair<String, String> {
+    return when {
+        status.isFullyConfigured -> "Active Protection" to "Reel monitoring and shield enforcement active"
+        status.areCorePermissionsGranted && !status.isServiceRunning -> "Service Inactive" to "Tap Start to resume scroll tracking"
+        status.isServiceRunning -> "Permissions Required" to "Grant permissions below to enable tracking"
+        else -> "Setup Required" to "Start service and grant permissions to track reels"
+    }
+}
 
 fun formatDwellTime(durationMs: Long): String {
     val totalSeconds = durationMs / 1000
@@ -91,12 +131,56 @@ fun calculateGoalProgress(currentReels: Int, targetReels: Int): Float {
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    permissionManager: PermissionManager = koinInject(),
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val isServiceRunning by UnreelForegroundService.isRunning.collectAsStateWithLifecycle()
+    val isDetectorConnected by ReelDetectorService.isConnected.collectAsStateWithLifecycle()
+    var permissionStatus by remember { mutableStateOf(permissionManager.getPermissionStatus()) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, isServiceRunning, isDetectorConnected) {
+        permissionStatus = permissionManager.getPermissionStatus()
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                permissionStatus = permissionManager.getPermissionStatus()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) {
+        permissionStatus = permissionManager.getPermissionStatus()
+    }
+
     HomeScreenContent(
         state = state,
+        permissionStatus = permissionStatus,
         onIntent = viewModel::onIntent,
+        onEnableAccessibility = { permissionManager.openAccessibilitySettings() },
+        onGrantOverlay = { permissionManager.openOverlaySettings() },
+        onRequestNotification = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                permissionManager.openNotificationSettings()
+            }
+        },
+        onRequestIgnoreBatteryOptimization = { permissionManager.requestIgnoreBatteryOptimizations() },
+        onToggleService = {
+            if (permissionStatus.isServiceRunning) {
+                permissionManager.stopMonitoringService()
+            } else {
+                permissionManager.startMonitoringService()
+            }
+            permissionStatus = permissionManager.getPermissionStatus()
+        },
         modifier = modifier,
     )
 }
@@ -104,7 +188,13 @@ fun HomeScreen(
 @Composable
 fun HomeScreenContent(
     state: HomeState,
-    onIntent: (HomeIntent) -> Unit,
+    permissionStatus: PermissionStatus = PermissionStatus(),
+    onIntent: (HomeIntent) -> Unit = {},
+    onEnableAccessibility: () -> Unit = {},
+    onGrantOverlay: () -> Unit = {},
+    onRequestNotification: () -> Unit = {},
+    onRequestIgnoreBatteryOptimization: () -> Unit = {},
+    onToggleService: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -170,6 +260,16 @@ fun HomeScreenContent(
                 }
             }
         }
+
+        // Service & Permissions Status Card
+        ServiceStatusCard(
+            status = permissionStatus,
+            onEnableAccessibility = onEnableAccessibility,
+            onGrantOverlay = onGrantOverlay,
+            onRequestNotification = onRequestNotification,
+            onRequestIgnoreBatteryOptimization = onRequestIgnoreBatteryOptimization,
+            onToggleService = onToggleService,
+        )
 
         // Restriction Banner (if blocked or in friction)
         AnimatedVisibility(
@@ -524,3 +624,258 @@ private fun RestrictionBanner(
         }
     }
 }
+
+@Composable
+fun ServiceStatusCard(
+    status: PermissionStatus,
+    onEnableAccessibility: () -> Unit,
+    onGrantOverlay: () -> Unit,
+    onRequestNotification: () -> Unit,
+    onRequestIgnoreBatteryOptimization: () -> Unit,
+    onToggleService: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val (title, description) = getServiceStatusHeader(status)
+    var isExpanded by remember(status.isFullyConfigured) { mutableStateOf(!status.isFullyConfigured) }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (status.isFullyConfigured) {
+                MaterialTheme.colorScheme.surfaceVariant
+            } else {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            },
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            // Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when {
+                                    status.isServiceRunning && status.isAccessibilityEnabled -> Color(0xFF00B894)
+                                    status.isServiceRunning -> Color(0xFFFDCB6E)
+                                    else -> MaterialTheme.colorScheme.error
+                                },
+                            ),
+                    )
+                    Column {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                IconButton(onClick = { isExpanded = !isExpanded }) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        contentDescription = if (isExpanded) "Collapse details" else "Expand details",
+                    )
+                }
+            }
+
+            // Quick Service Control Banner
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PowerSettingsNew,
+                        contentDescription = null,
+                        tint = if (status.isServiceRunning) Color(0xFF00B894) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = if (status.isServiceRunning) "Foreground Monitor: Active" else "Foreground Monitor: Stopped",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                FilledTonalButton(
+                    onClick = onToggleService,
+                    colors = if (status.isServiceRunning) {
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    } else {
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    },
+                ) {
+                    Icon(
+                        imageVector = if (status.isServiceRunning) Icons.Rounded.Stop else Icons.Rounded.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (status.isServiceRunning) "Stop" else "Start Service")
+                }
+            }
+
+            // Expanded Permissions Checklist
+            if (isExpanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // 1. Accessibility Service
+                    PermissionRow(
+                        title = "Reel Detection (Accessibility)",
+                        description = "Detects when you view reels on Instagram, YouTube & TikTok. Privacy-safe: never reads on-screen text or messages.",
+                        icon = Icons.Rounded.Visibility,
+                        isGranted = status.isAccessibilityEnabled,
+                        actionLabel = "Enable in Settings",
+                        onAction = onEnableAccessibility,
+                    )
+
+                    // 2. Overlay Permission
+                    PermissionRow(
+                        title = "Screen Blocking Overlay",
+                        description = "Required to display the blocking shield over reels when your daily limit is reached.",
+                        icon = Icons.Rounded.Layers,
+                        isGranted = status.isOverlayGranted,
+                        actionLabel = "Grant Overlay",
+                        onAction = onGrantOverlay,
+                    )
+
+                    // 3. Notification Permission
+                    PermissionRow(
+                        title = "Notifications",
+                        description = "Shows continuous reel counters in the status bar and sends nudges.",
+                        icon = Icons.Rounded.Notifications,
+                        isGranted = status.isNotificationGranted,
+                        actionLabel = "Allow",
+                        onAction = onRequestNotification,
+                    )
+
+                    // 4. Battery Optimization
+                    PermissionRow(
+                        title = "Battery Saver Exemption",
+                        description = "Prevents aggressive OEM battery managers from stopping the background service.",
+                        icon = Icons.Rounded.BatteryChargingFull,
+                        isGranted = status.isBatteryOptimizationIgnored,
+                        actionLabel = "Disable Saver",
+                        onAction = onRequestIgnoreBatteryOptimization,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionRow(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isGranted: Boolean,
+    actionLabel: String,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isGranted) Color(0xFF00B894) else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                if (isGranted) {
+                    SuggestionChip(
+                        onClick = onAction,
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = Color(0xFF00B894),
+                            )
+                        },
+                        label = { Text("Active") },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = Color(0xFF00B894).copy(alpha = 0.15f),
+                            labelColor = Color(0xFF00B894),
+                        ),
+                    )
+                } else {
+                    FilledTonalButton(
+                        onClick = onAction,
+                        modifier = Modifier.height(34.dp),
+                    ) {
+                        Text(actionLabel, fontSize = 12.sp)
+                    }
+                }
+            }
+
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+

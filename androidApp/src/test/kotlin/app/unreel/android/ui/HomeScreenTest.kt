@@ -48,4 +48,34 @@ class HomeScreenTest {
         )
         assertTrue(blockState.isRestricted)
     }
+
+    @Test
+    fun `getServiceStatusHeader returns accurate titles and descriptions for PermissionStatus`() {
+        val fullyConfigured = app.unreel.android.platform.PermissionStatus(
+            isAccessibilityEnabled = true,
+            isOverlayGranted = true,
+            isNotificationGranted = true,
+            isBatteryOptimizationIgnored = true,
+            isServiceRunning = true,
+        )
+        val (fullTitle, fullDesc) = getServiceStatusHeader(fullyConfigured)
+        assertEquals("Active Protection", fullTitle)
+        assertTrue(fullDesc.contains("active"))
+
+        val serviceInactive = fullyConfigured.copy(isServiceRunning = false)
+        val (inactiveTitle, inactiveDesc) = getServiceStatusHeader(serviceInactive)
+        assertEquals("Service Inactive", inactiveTitle)
+        assertTrue(inactiveDesc.contains("Start"))
+
+        val permissionsRequired = fullyConfigured.copy(isAccessibilityEnabled = false)
+        val (permTitle, permDesc) = getServiceStatusHeader(permissionsRequired)
+        assertEquals("Permissions Required", permTitle)
+        assertTrue(permDesc.contains("Grant"))
+
+        val setupRequired = app.unreel.android.platform.PermissionStatus()
+        val (setupTitle, setupDesc) = getServiceStatusHeader(setupRequired)
+        assertEquals("Setup Required", setupTitle)
+        assertTrue(setupDesc.contains("permissions"))
+    }
 }
+
