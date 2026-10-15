@@ -43,6 +43,18 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
+        <!-- Home screen Glance Widget (Phase 5) -->
+        <receiver
+            android:name=".widget.UnreelGlanceWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/unreel_glance_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>

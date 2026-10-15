@@ -43,7 +43,7 @@ val androidAppModule: Module = module {
     single { AndroidOverlayEnforcer() }
     single<Enforcer> { get<AndroidOverlayEnforcer>() }
 
-    single { AndroidLiveSurfacePublisher() }
+    single { AndroidLiveSurfacePublisher(context = runCatching { androidContext() }.getOrNull()) }
     single<LiveSurfacePublisher> { get<AndroidLiveSurfacePublisher>() }
 
     single { AndroidScrollEventSource() }

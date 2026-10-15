@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.android)
     implementation(libs.datetime)
+    implementation(libs.serialization.json)
     implementation(libs.multiplatformSettings)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
@@ -33,6 +34,10 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
 
     testImplementation(project(":shared:testing"))
     testImplementation(libs.junit)

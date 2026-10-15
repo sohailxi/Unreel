@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Unreel</string>
     <string name="accessibility_service_description">Unreel counts your reel scrolls to help you understand and manage your short-video usage. This service only counts scrolls in your selected apps — it never reads, stores, or shares any text, messages, or personal content.</string>
+    <string name="widget_description">Track your daily reels and scroll time at a glance on your home screen.</string>
 </resources>
