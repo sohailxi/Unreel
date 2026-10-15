@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material.icons.outlined.Shield
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -39,7 +41,10 @@ import androidx.compose.ui.unit.sp
 import app.unreel.presentation.home.HomeViewModel
 import app.unreel.presentation.rules.RulesViewModel
 import app.unreel.presentation.stats.StatsViewModel
+import com.russhwolf.settings.Settings
 import org.koin.compose.koinInject
+
+const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
 
 enum class AppTab(
     val title: String,
@@ -57,8 +62,23 @@ fun UnreelApp(
     homeViewModel: HomeViewModel = koinInject(),
     statsViewModel: StatsViewModel = koinInject(),
     rulesViewModel: RulesViewModel = koinInject(),
+    settings: Settings = koinInject(),
     modifier: Modifier = Modifier,
 ) {
+    var isOnboardingCompleted by remember {
+        mutableStateOf(settings.getBoolean(KEY_HAS_COMPLETED_ONBOARDING, false))
+    }
+
+    if (!isOnboardingCompleted) {
+        OnboardingScreen(
+            onComplete = {
+                settings.putBoolean(KEY_HAS_COMPLETED_ONBOARDING, true)
+                isOnboardingCompleted = true
+            },
+        )
+        return
+    }
+
     var selectedTab by remember { mutableStateOf(AppTab.HOME) }
 
     Scaffold(
@@ -87,6 +107,17 @@ fun UnreelApp(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { isOnboardingCompleted = false },
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.HelpOutline,
+                            contentDescription = "Setup Guide & Privacy",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
