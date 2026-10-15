@@ -56,6 +56,8 @@ val androidAppModule: Module = module {
     single { AndroidScrollEventSource() }
     single<ScrollEventSource> { get<AndroidScrollEventSource>() }
 
+    single { app.unreel.android.detector.ReelDetectorEngine(clock = get()) }
+
     single<NotificationPort> { AndroidNotificationPort(context = runCatching { androidContext() }.getOrNull()) }
 
     factory {

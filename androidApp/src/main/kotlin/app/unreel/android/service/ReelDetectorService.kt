@@ -2,11 +2,9 @@ package app.unreel.android.service
 
 import android.accessibilityservice.AccessibilityService
 import android.view.accessibility.AccessibilityEvent
+import app.unreel.android.detector.ReelDetectorEngine
 import app.unreel.android.platform.AndroidScrollEventSource
 import app.unreel.domain.usecase.IngestReelEventUseCase
-import app.unreel.model.DataSource
-import app.unreel.model.ReelEvent
-import app.unreel.time.AppClock
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +28,7 @@ class ReelDetectorService : AccessibilityService(), KoinComponent {
     private val logger = Logger.withTag("ReelDetectorService")
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val clock: AppClock by inject()
+    private val detectorEngine: ReelDetectorEngine by inject()
     private val scrollEventSource: AndroidScrollEventSource by inject()
     private val ingestReelEventUseCase: IngestReelEventUseCase by inject()
 
@@ -38,22 +36,17 @@ class ReelDetectorService : AccessibilityService(), KoinComponent {
         if (event == null) return
         val packageName = event.packageName?.toString() ?: return
 
-        if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            val now = clock.now()
-            val reelEvent = ReelEvent(
-                id = "reel-${packageName}-${now.toEpochMilliseconds()}",
-                appId = packageName,
-                tsUtc = now,
-                dwellMs = 1500L,
-                source = DataSource.EXACT,
-            )
-            scrollEventSource.emit(reelEvent)
-            serviceScope.launch {
-                try {
-                    ingestReelEventUseCase(reelEvent)
-                } catch (t: Throwable) {
-                    logger.e(t) { "Error ingesting reel event for $packageName" }
-                }
+        val reelEvent = detectorEngine.processEvent(
+            packageName = packageName,
+            eventType = event.eventType,
+        ) ?: return
+
+        scrollEventSource.emit(reelEvent)
+        serviceScope.launch {
+            try {
+                ingestReelEventUseCase(reelEvent)
+            } catch (t: Throwable) {
+                logger.e(t) { "Error ingesting reel event for $packageName" }
             }
         }
     }

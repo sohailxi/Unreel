@@ -70,6 +70,8 @@ class AndroidAppModuleTest : KoinTest {
         val reelUseCase = get<IngestReelEventUseCase>()
         assertNotNull(reelUseCase)
 
+        assertNotNull(get<app.unreel.android.detector.ReelDetectorEngine>())
+
         val tickUseCase = get<IngestUsageTickUseCase>()
         assertNotNull(tickUseCase)
     }
