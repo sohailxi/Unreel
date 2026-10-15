@@ -1,8 +1,11 @@
 import SwiftUI
 import Shared
+import FamilyControls
 
 struct RulesView: View {
     @ObservedObject var viewModel: RulesObservable
+    @EnvironmentObject var familyControlsManager: FamilyControlsManager
+    @State private var isPickerPresented: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -18,6 +21,12 @@ struct RulesView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // Screen Time & Shielding Card
+                        ScreenTimeProtectionCardView(
+                            familyControlsManager: familyControlsManager,
+                            isPickerPresented: $isPickerPresented
+                        )
 
                         // Focus Target Goals Card
                         VStack(alignment: .leading, spacing: 16) {
@@ -255,3 +264,80 @@ private struct RuleRowView: View {
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
+
+private struct ScreenTimeProtectionCardView: View {
+    @ObservedObject var familyControlsManager: FamilyControlsManager
+    @Binding var isPickerPresented: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "shield.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentColor)
+                Text("Screen Time Shielding")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Spacer()
+                if familyControlsManager.isAuthorized {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption2)
+                        Text("Active")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.green.opacity(0.15), in: Capsule())
+                    .foregroundStyle(.green)
+                }
+            }
+
+            Text("Protect your focus by locking short-video apps at the iOS system level when daily limits are reached.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if !familyControlsManager.isAuthorized {
+                Button(action: {
+                    Task {
+                        await familyControlsManager.requestAuthorization()
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "hand.raised.fill")
+                        Text("Authorize Screen Time Access")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.white)
+                }
+            } else {
+                Button(action: {
+                    isPickerPresented = true
+                }) {
+                    HStack {
+                        Image(systemName: "slider.horizontal.3")
+                        Text("Select Apps & Categories to Shield")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.primary)
+                }
+                .familyActivityPicker(isPresented: $isPickerPresented, selection: $familyControlsManager.activitySelection)
+                .onChange(of: familyControlsManager.activitySelection) { newSelection in
+                    DeviceActivityManager.shared.startMonitoring(for: newSelection)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+

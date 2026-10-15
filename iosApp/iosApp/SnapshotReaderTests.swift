@@ -11,6 +11,7 @@ enum SnapshotReaderTests {
         testStatusText()
         testJsonDecoding()
         testCorruptedJsonFallback()
+        testUsageTickDurationIncrement()
         return true
     }
 
@@ -157,5 +158,40 @@ enum SnapshotReaderTests {
         let data = corruptedJson.data(using: .utf8)!
         let result = (try? JSONDecoder().decode(WidgetUsageSnapshot.self, from: data)) ?? .placeholder
         assert(result == .placeholder)
+    }
+
+    private static func testUsageTickDurationIncrement() {
+        let original = WidgetUsageSnapshot(
+            version: 1,
+            date: "2026-10-15",
+            todayReels: 20,
+            todayDurationMs: 30 * 60 * 1000,
+            sessionReels: 5,
+            activeSessionDurationMs: 10 * 60 * 1000,
+            limitProgress: 0.95,
+            decisionReason: nil,
+            isBlocked: false,
+            source: "ESTIMATED",
+            updatedAtUtc: "2026-10-15T10:00:00Z"
+        )
+
+        let tickMs: Int64 = 60_000
+        let updated = WidgetUsageSnapshot(
+            version: original.version,
+            date: original.date,
+            todayReels: original.todayReels,
+            todayDurationMs: original.todayDurationMs + tickMs,
+            sessionReels: original.sessionReels,
+            activeSessionDurationMs: original.activeSessionDurationMs + tickMs,
+            limitProgress: 1.0,
+            decisionReason: "Daily Limit Reached",
+            isBlocked: true,
+            source: "ESTIMATED",
+            updatedAtUtc: "2026-10-15T10:01:00Z"
+        )
+
+        assert(updated.todayDurationMs == 31 * 60 * 1000)
+        assert(updated.isBlocked == true)
+        assert(updated.statusText == "BLOCKED")
     }
 }

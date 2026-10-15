@@ -1,9 +1,11 @@
 import SwiftUI
 import Shared
+import FamilyControls
 
 @main
 struct iOSApp: App {
     @StateObject private var activityManager = ActivityKitManager.shared
+    @StateObject private var familyControlsManager = FamilyControlsManager.shared
     private var unsubscribeLiveSurface: (() -> Void)?
 
     init() {
@@ -15,6 +17,12 @@ struct iOSApp: App {
         self.unsubscribeLiveSurface = helper.observeLiveSurface { surfaceState in
             Task { @MainActor in
                 ActivityKitManager.shared.syncWithSurfaceState(surfaceState)
+                let isLimitReached = (surfaceState.limitProgress?.floatValue ?? 0) >= 1.0
+                if isLimitReached {
+                    ShieldManager.shared.applyShield(for: FamilyControlsManager.shared.activitySelection)
+                } else {
+                    ShieldManager.shared.clearShield()
+                }
             }
         }
     }
@@ -23,6 +31,7 @@ struct iOSApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(activityManager)
+                .environmentObject(familyControlsManager)
         }
     }
 }
