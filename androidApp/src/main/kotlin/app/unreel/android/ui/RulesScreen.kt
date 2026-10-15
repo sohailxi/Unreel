@@ -16,18 +16,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.HourglassTop
+import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.LockClock
 import androidx.compose.material.icons.rounded.PieChart
+import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -40,20 +45,33 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.unreel.android.platform.PermissionManager
+import app.unreel.android.platform.PermissionStatus
+import app.unreel.android.service.ReelDetectorService
+import app.unreel.android.service.UnreelForegroundService
 import app.unreel.model.LimitRule
 import app.unreel.model.RuleKind
 import app.unreel.model.Strictness
 import app.unreel.presentation.rules.RulesIntent
 import app.unreel.presentation.rules.RulesState
 import app.unreel.presentation.rules.RulesViewModel
+import org.koin.compose.koinInject
 
 fun formatRuleKind(kind: RuleKind): String {
     return when (kind) {
@@ -90,12 +108,42 @@ fun formatRuleParamsSummary(rule: LimitRule): String {
 @Composable
 fun RulesScreen(
     viewModel: RulesViewModel,
+    permissionManager: PermissionManager = koinInject(),
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val isServiceRunning by UnreelForegroundService.isRunning.collectAsStateWithLifecycle()
+    val isDetectorConnected by ReelDetectorService.isConnected.collectAsStateWithLifecycle()
+    var permissionStatus by remember { mutableStateOf(permissionManager.getPermissionStatus()) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, isServiceRunning, isDetectorConnected) {
+        permissionStatus = permissionManager.getPermissionStatus()
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                permissionStatus = permissionManager.getPermissionStatus()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     RulesScreenContent(
         state = state,
+        permissionStatus = permissionStatus,
         onIntent = viewModel::onIntent,
+        onEnableAccessibility = { permissionManager.openAccessibilitySettings() },
+        onGrantOverlay = { permissionManager.openOverlaySettings() },
+        onToggleService = {
+            if (permissionStatus.isServiceRunning) {
+                permissionManager.stopMonitoringService()
+            } else {
+                permissionManager.startMonitoringService()
+            }
+            permissionStatus = permissionManager.getPermissionStatus()
+        },
         modifier = modifier,
     )
 }
@@ -103,7 +151,11 @@ fun RulesScreen(
 @Composable
 fun RulesScreenContent(
     state: RulesState,
-    onIntent: (RulesIntent) -> Unit,
+    permissionStatus: PermissionStatus = PermissionStatus(),
+    onIntent: (RulesIntent) -> Unit = {},
+    onEnableAccessibility: () -> Unit = {},
+    onGrantOverlay: () -> Unit = {},
+    onToggleService: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -136,6 +188,16 @@ fun RulesScreenContent(
                     )
                 }
             }
+        }
+
+        // System Enforcement Protection Card
+        item {
+            SystemEnforcementProtectionCard(
+                status = permissionStatus,
+                onEnableAccessibility = onEnableAccessibility,
+                onGrantOverlay = onGrantOverlay,
+                onToggleService = onToggleService,
+            )
         }
 
         // Daily Goals Card
@@ -397,3 +459,181 @@ private fun RuleCard(
         }
     }
 }
+
+@Composable
+private fun SystemEnforcementProtectionCard(
+    status: PermissionStatus,
+    onEnableAccessibility: () -> Unit,
+    onGrantOverlay: () -> Unit,
+    onToggleService: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Shield,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Text(
+                        text = "System Protection & Shielding",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                if (status.isOverlayGranted && status.isAccessibilityEnabled && status.isServiceRunning) {
+                    SuggestionChip(
+                        onClick = {},
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = Color(0xFF00B894),
+                            )
+                        },
+                        label = { Text("Active") },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = Color(0xFF00B894).copy(alpha = 0.15f),
+                            labelColor = Color(0xFF00B894),
+                        ),
+                    )
+                }
+            }
+
+            Text(
+                text = "Enforce limits by blocking short video apps with floating shields. Android requires Overlay and Accessibility permissions to operate.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            // Overlay Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Layers,
+                        contentDescription = null,
+                        tint = if (status.isOverlayGranted) Color(0xFF00B894) else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = "Screen Blocking Shield",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                if (status.isOverlayGranted) {
+                    Text("Granted ✓", style = MaterialTheme.typography.labelSmall, color = Color(0xFF00B894))
+                } else {
+                    FilledTonalButton(onClick = onGrantOverlay, modifier = Modifier.height(34.dp)) {
+                        Text("Grant Permission", fontSize = 11.sp)
+                    }
+                }
+            }
+
+            // Accessibility Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Visibility,
+                        contentDescription = null,
+                        tint = if (status.isAccessibilityEnabled) Color(0xFF00B894) else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = "Reel Detection Engine",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                if (status.isAccessibilityEnabled) {
+                    Text("Active ✓", style = MaterialTheme.typography.labelSmall, color = Color(0xFF00B894))
+                } else {
+                    FilledTonalButton(onClick = onEnableAccessibility, modifier = Modifier.height(34.dp)) {
+                        Text("Enable Detector", fontSize = 11.sp)
+                    }
+                }
+            }
+
+            // Foreground Service Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PowerSettingsNew,
+                        contentDescription = null,
+                        tint = if (status.isServiceRunning) Color(0xFF00B894) else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = "Ongoing Monitoring Service",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                FilledTonalButton(
+                    onClick = onToggleService,
+                    modifier = Modifier.height(34.dp),
+                    colors = if (status.isServiceRunning) {
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    } else {
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    },
+                ) {
+                    Text(if (status.isServiceRunning) "Stop Service" else "Start Service", fontSize = 11.sp)
+                }
+            }
+        }
+    }
+}
+

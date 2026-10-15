@@ -41,4 +41,13 @@ class RulesScreenTest {
         )
         assertEquals("45 minutes limit", formatRuleParamsSummary(timeRule))
     }
+
+    @Test
+    fun `RulesScreen rule kinds mapping covers all RuleKind values`() {
+        RuleKind.entries.forEach { kind ->
+            val title = formatRuleKind(kind)
+            kotlin.test.assertTrue(title.isNotEmpty())
+            kotlin.test.assertNotNull(ruleKindIcon(kind))
+        }
+    }
 }
