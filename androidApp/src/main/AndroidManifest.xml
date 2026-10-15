@@ -55,6 +55,26 @@
                 android:resource="@xml/unreel_glance_widget_info" />
         </receiver>
 
+        <!-- Foreground service for continuous reel tracking and survival (ADR-005) -->
+        <service
+            android:name=".service.UnreelForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Continuous short-video scroll detection and usage limit enforcement" />
+        </service>
+
+        <!-- Boot receiver for restarting tracking after device reboot -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
