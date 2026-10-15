@@ -50,4 +50,13 @@ class RulesScreenTest {
             kotlin.test.assertNotNull(ruleKindIcon(kind))
         }
     }
+
+    @Test
+    fun `requiresOverlayShield returns true for blocking and friction strictness levels`() {
+        kotlin.test.assertFalse(requiresOverlayShield(Strictness.NUDGE))
+        kotlin.test.assertTrue(requiresOverlayShield(Strictness.FRICTION))
+        kotlin.test.assertTrue(requiresOverlayShield(Strictness.SOFT_BLOCK))
+        kotlin.test.assertTrue(requiresOverlayShield(Strictness.HARD_BLOCK))
+        kotlin.test.assertTrue(requiresOverlayShield(Strictness.STRICT))
+    }
 }

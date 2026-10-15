@@ -100,5 +100,11 @@ class AndroidPermissionManagerTest {
         manager.openAutostartSettings()
         kotlin.test.assertNotNull(manager.getDeviceManufacturer())
     }
+
+    @Test
+    fun `sendTestNotification handles null context safely without throwing`() {
+        val manager = AndroidPermissionManager(context = null)
+        manager.sendTestNotification()
+    }
 }
 

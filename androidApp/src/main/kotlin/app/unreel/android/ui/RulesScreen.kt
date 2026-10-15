@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,6 +45,7 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -105,6 +107,13 @@ fun formatRuleParamsSummary(rule: LimitRule): String {
     }
 }
 
+/**
+ * Determines whether a given [Strictness] setting requires system Overlay (Draw over other apps)
+ * permission to enforce visual blocking or friction shields.
+ */
+fun requiresOverlayShield(strictness: Strictness): Boolean =
+    strictness != Strictness.NUDGE
+
 @Composable
 fun RulesScreen(
     viewModel: RulesViewModel,
@@ -160,6 +169,61 @@ fun RulesScreenContent(
     onToggleService: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var pendingRuleToEnable by remember { mutableStateOf<LimitRule?>(null) }
+    var showOverlayDialog by remember { mutableStateOf(false) }
+
+    if (showOverlayDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showOverlayDialog = false
+                pendingRuleToEnable = null
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.Shield,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp),
+                )
+            },
+            title = {
+                Text(
+                    text = "Overlay Permission Required",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                val ruleName = pendingRuleToEnable?.let { formatRuleKind(it.kind) } ?: "This limit rule"
+                Text(
+                    text = "$ruleName enforces limits by displaying a friction shield or block screen over short videos. Android requires 'Draw over other apps' permission to display shields.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showOverlayDialog = false
+                        pendingRuleToEnable = null
+                        onGrantOverlay()
+                    },
+                ) {
+                    Text("Grant Permission")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showOverlayDialog = false
+                        pendingRuleToEnable = null
+                    },
+                ) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -380,7 +444,14 @@ fun RulesScreenContent(
             items(state.rules) { rule ->
                 RuleCard(
                     rule = rule,
-                    onToggle = { enabled -> onIntent(RulesIntent.ToggleRule(rule.id, enabled)) },
+                    onToggle = { enabled ->
+                        if (enabled && requiresOverlayShield(rule.strictness) && !permissionStatus.isOverlayGranted) {
+                            pendingRuleToEnable = rule
+                            showOverlayDialog = true
+                        } else {
+                            onIntent(RulesIntent.ToggleRule(rule.id, enabled))
+                        }
+                    },
                 )
             }
         }

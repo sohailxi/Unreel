@@ -287,6 +287,9 @@ fun OnboardingScreen(
                                     permissionManager.openNotificationSettings()
                                 }
                             },
+                            onSendTestNotification = {
+                                permissionManager.sendTestNotification()
+                            },
                             onRequestIgnoreBattery = {
                                 permissionManager.requestIgnoreBatteryOptimizations()
                             },

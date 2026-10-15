@@ -214,6 +214,7 @@ fun ShieldingSetupCard(
     status: PermissionStatus,
     onGrantOverlay: () -> Unit,
     onRequestNotification: () -> Unit,
+    onSendTestNotification: () -> Unit = {},
     onRequestIgnoreBattery: () -> Unit,
     onOpenAutostart: () -> Unit,
     modifier: Modifier = Modifier,
@@ -311,6 +312,22 @@ fun ShieldingSetupCard(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(if (status.isNotificationGranted) "Notification Settings" else "Enable Notifications")
+                }
+
+                if (status.isNotificationGranted) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onSendTestNotification,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.NotificationsActive,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Send Test Nudge Notification")
+                    }
                 }
             }
         }

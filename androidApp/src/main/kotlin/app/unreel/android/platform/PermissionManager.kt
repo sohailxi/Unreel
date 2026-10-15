@@ -3,6 +3,8 @@ package app.unreel.android.platform
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -13,6 +15,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.accessibility.AccessibilityManager
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import app.unreel.android.service.ReelDetectorService
@@ -58,6 +61,7 @@ interface PermissionManager {
     fun openAutostartSettings()
     fun startMonitoringService()
     fun stopMonitoringService()
+    fun sendTestNotification()
 }
 
 /**
@@ -246,7 +250,36 @@ class AndroidPermissionManager(
         }
     }
 
+    override fun sendTestNotification() {
+        val ctx = context ?: return
+        try {
+            val notificationManager =
+                ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            val channelId = "unreel_nudges"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId,
+                    "Usage Nudges",
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                )
+                notificationManager?.createNotificationChannel(channel)
+            }
+            val notification = NotificationCompat.Builder(ctx, channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("Unreel Nudge Test")
+                .setContentText("Notifications are working properly! You will receive mindful scroll alerts.")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                .build()
+            notificationManager?.notify(TEST_NOTIFICATION_ID, notification)
+            logger.i { "Sent test notification successfully" }
+        } catch (t: Throwable) {
+            logger.e(t) { "Failed to send test notification" }
+        }
+    }
+
     companion object {
+        const val TEST_NOTIFICATION_ID = 9999
         fun formatManufacturer(manufacturer: String?): String {
             val raw = manufacturer?.trim().orEmpty()
             return if (raw.isNotEmpty()) {

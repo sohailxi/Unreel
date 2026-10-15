@@ -172,6 +172,7 @@ fun HomeScreen(
                 permissionManager.openNotificationSettings()
             }
         },
+        onSendTestNotification = { permissionManager.sendTestNotification() },
         onRequestIgnoreBatteryOptimization = { permissionManager.requestIgnoreBatteryOptimizations() },
         onOpenAutostart = { permissionManager.openAutostartSettings() },
         onToggleService = {
@@ -194,6 +195,7 @@ fun HomeScreenContent(
     onEnableAccessibility: () -> Unit = {},
     onGrantOverlay: () -> Unit = {},
     onRequestNotification: () -> Unit = {},
+    onSendTestNotification: () -> Unit = {},
     onRequestIgnoreBatteryOptimization: () -> Unit = {},
     onOpenAutostart: () -> Unit = {},
     onToggleService: () -> Unit = {},
@@ -269,6 +271,7 @@ fun HomeScreenContent(
             onEnableAccessibility = onEnableAccessibility,
             onGrantOverlay = onGrantOverlay,
             onRequestNotification = onRequestNotification,
+            onSendTestNotification = onSendTestNotification,
             onRequestIgnoreBatteryOptimization = onRequestIgnoreBatteryOptimization,
             onOpenAutostart = onOpenAutostart,
             onToggleService = onToggleService,
@@ -634,6 +637,7 @@ fun ServiceStatusCard(
     onEnableAccessibility: () -> Unit,
     onGrantOverlay: () -> Unit,
     onRequestNotification: () -> Unit,
+    onSendTestNotification: () -> Unit = {},
     onRequestIgnoreBatteryOptimization: () -> Unit,
     onOpenAutostart: () -> Unit = {},
     onToggleService: () -> Unit,
@@ -789,6 +793,21 @@ fun ServiceStatusCard(
                         actionLabel = "Allow",
                         onAction = onRequestNotification,
                     )
+
+                    if (status.isNotificationGranted) {
+                        OutlinedButton(
+                            onClick = onSendTestNotification,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.NotificationsActive,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Send Test Nudge", fontSize = 12.sp)
+                        }
+                    }
 
                     // 4. Battery Optimization
                     PermissionRow(
