@@ -223,4 +223,24 @@ class ReelDetectorEngineTest {
         assertNotNull(lemon8Event)
         assertEquals("com.bd.nproject", lemon8Event.appId)
     }
+
+    @Test
+    fun `alternative and modded YouTube clients like Morphe and ReVanced map to canonical YouTube Shorts appId`() {
+        val morpheEvent = detector.processEvent(
+            packageName = "app.morphe.android.youtube",
+            eventType = AccessibilityEvent.TYPE_VIEW_SCROLLED,
+        )
+        assertNotNull(morpheEvent)
+        assertEquals("com.google.android.youtube", morpheEvent.appId)
+        assertEquals(DataSource.EXACT, morpheEvent.source)
+
+        fakeClock.advanceBy(4_000L)
+        val revancedEvent = detector.processEvent(
+            packageName = "app.revanced.android.youtube",
+            eventType = AccessibilityEvent.TYPE_VIEW_SELECTED,
+        )
+        assertNotNull(revancedEvent)
+        assertEquals("com.google.android.youtube", revancedEvent.appId)
+    }
 }
+

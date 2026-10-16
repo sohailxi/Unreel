@@ -179,6 +179,8 @@ private struct TodayUsageCardView: View {
                         Text("\(reels)")
                             .font(.system(size: 44, weight: .black, design: .rounded))
                             .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     Text("reels watched")
                         .font(.subheadline)
@@ -194,6 +196,8 @@ private struct TodayUsageCardView: View {
                         Text(formatDuration(durationMs))
                             .font(.system(.title3, design: .rounded, weight: .bold))
                             .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     Text("total time")
                         .font(.caption)

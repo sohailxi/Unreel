@@ -163,6 +163,8 @@ private struct TrendCardView: View {
                     Text(trendTitle)
                         .font(.system(.title3, design: .rounded, weight: .bold))
                         .foregroundStyle(trendColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
 
                 Spacer()
@@ -200,6 +202,8 @@ private struct AveragesCardView: View {
                     Text("\(avgReels)")
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundStyle(Color.accentColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
                 Text("Daily Avg Reels")
                     .font(.caption)
@@ -219,6 +223,8 @@ private struct AveragesCardView: View {
                     Text(formatDuration(avgDurationMs))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
                 Text("Daily Avg Time")
                     .font(.caption)
@@ -286,9 +292,13 @@ private struct DailyRowView: View {
                 Text("\(daily.reels) reels")
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
                     .foregroundStyle(Color.accentColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Text(formatDwell(daily.durationMs))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
         }
         .padding(14)

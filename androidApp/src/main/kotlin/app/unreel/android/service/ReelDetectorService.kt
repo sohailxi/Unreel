@@ -41,6 +41,7 @@ class ReelDetectorService : AccessibilityService(), KoinComponent {
             eventType = event.eventType,
         ) ?: return
 
+        logger.i { "Detected reel event: app=${reelEvent.appId} (pkg=$packageName), dwell=${reelEvent.dwellMs}ms" }
         scrollEventSource.emit(reelEvent)
         serviceScope.launch {
             try {
@@ -55,13 +56,18 @@ class ReelDetectorService : AccessibilityService(), KoinComponent {
         super.onServiceConnected()
         try {
             val info = serviceInfo ?: android.accessibilityservice.AccessibilityServiceInfo()
-            info.packageNames = app.unreel.model.TrackedAppCatalog.allAndroidPackages.toTypedArray()
+            val packages = app.unreel.model.TrackedAppCatalog.allAndroidPackages.toTypedArray()
+            info.packageNames = packages
+            info.flags = info.flags or
+                android.accessibilityservice.AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+                android.accessibilityservice.AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
             serviceInfo = info
+            logger.i { "ReelDetectorService connected with ${packages.size} packages" }
         } catch (t: Throwable) {
             logger.w(t) { "Could not dynamically update AccessibilityServiceInfo packageNames" }
         }
         _isConnected.value = true
-        logger.i { "ReelDetectorService connected" }
     }
 
     override fun onInterrupt() {

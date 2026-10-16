@@ -2,8 +2,10 @@ package app.unreel.android.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -302,6 +305,9 @@ fun RulesScreenContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -316,11 +322,14 @@ fun RulesScreenContent(
                                     text = "Daily Reel Goal",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = "${state.goalReels} reels per day",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
                                 )
                             }
                         }
@@ -350,6 +359,9 @@ fun RulesScreenContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -364,11 +376,14 @@ fun RulesScreenContent(
                                     text = "Daily Time Goal",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = "${state.goalMinutes} minutes per day",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
                                 )
                             }
                         }
@@ -489,31 +504,31 @@ private fun RuleCard(
                         .padding(top = 2.dp)
                         .size(24.dp),
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = formatRuleKind(rule.kind),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        SuggestionChip(
-                            onClick = {},
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Security,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(12.dp),
-                                )
-                            },
-                            label = { Text(rule.strictness.name) },
-                            colors = SuggestionChipDefaults.suggestionChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            ),
-                        )
-                    }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = formatRuleKind(rule.kind),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    SuggestionChip(
+                        onClick = {},
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Security,
+                                contentDescription = null,
+                                modifier = Modifier.size(12.dp),
+                            )
+                        },
+                        label = { Text(rule.strictness.name, fontSize = 11.sp) },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                    )
                     Text(
                         text = formatRuleParamsSummary(rule),
                         style = MaterialTheme.typography.bodyMedium,
@@ -563,6 +578,9 @@ private fun SystemEnforcementProtectionCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -576,6 +594,8 @@ private fun SystemEnforcementProtectionCard(
                         text = "System Protection & Shielding",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
 
@@ -590,7 +610,7 @@ private fun SystemEnforcementProtectionCard(
                                 tint = Color(0xFF00B894),
                             )
                         },
-                        label = { Text("Active") },
+                        label = { Text("Active", fontSize = 11.sp) },
                         colors = SuggestionChipDefaults.suggestionChipColors(
                             containerColor = Color(0xFF00B894).copy(alpha = 0.15f),
                             labelColor = Color(0xFF00B894),
@@ -612,7 +632,9 @@ private fun SystemEnforcementProtectionCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -632,8 +654,12 @@ private fun SystemEnforcementProtectionCard(
                 if (status.isOverlayGranted) {
                     Text("Granted ✓", style = MaterialTheme.typography.labelSmall, color = Color(0xFF00B894))
                 } else {
-                    FilledTonalButton(onClick = onGrantOverlay, modifier = Modifier.height(34.dp)) {
-                        Text("Grant Permission", fontSize = 11.sp)
+                    FilledTonalButton(
+                        onClick = onGrantOverlay,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 36.dp, minWidth = 1.dp),
+                    ) {
+                        Text("Grant Permission", fontSize = 11.sp, maxLines = 1)
                     }
                 }
             }
@@ -645,7 +671,9 @@ private fun SystemEnforcementProtectionCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -665,8 +693,12 @@ private fun SystemEnforcementProtectionCard(
                 if (status.isAccessibilityEnabled) {
                     Text("Active ✓", style = MaterialTheme.typography.labelSmall, color = Color(0xFF00B894))
                 } else {
-                    FilledTonalButton(onClick = onEnableAccessibility, modifier = Modifier.height(34.dp)) {
-                        Text("Enable Detector", fontSize = 11.sp)
+                    FilledTonalButton(
+                        onClick = onEnableAccessibility,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 36.dp, minWidth = 1.dp),
+                    ) {
+                        Text("Enable Detector", fontSize = 11.sp, maxLines = 1)
                     }
                 }
             }
@@ -678,7 +710,9 @@ private fun SystemEnforcementProtectionCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -697,7 +731,8 @@ private fun SystemEnforcementProtectionCard(
 
                 FilledTonalButton(
                     onClick = onToggleService,
-                    modifier = Modifier.height(34.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.defaultMinSize(minHeight = 36.dp, minWidth = 1.dp),
                     colors = if (status.isServiceRunning) {
                         ButtonDefaults.filledTonalButtonColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -710,7 +745,7 @@ private fun SystemEnforcementProtectionCard(
                         )
                     },
                 ) {
-                    Text(if (status.isServiceRunning) "Stop Service" else "Start Service", fontSize = 11.sp)
+                    Text(if (status.isServiceRunning) "Stop Service" else "Start Service", fontSize = 11.sp, maxLines = 1)
                 }
             }
 
@@ -722,7 +757,9 @@ private fun SystemEnforcementProtectionCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -741,9 +778,10 @@ private fun SystemEnforcementProtectionCard(
 
                     FilledTonalButton(
                         onClick = onOpenAutostart,
-                        modifier = Modifier.height(34.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 36.dp, minWidth = 1.dp),
                     ) {
-                        Text("Configure", fontSize = 11.sp)
+                        Text("Configure", fontSize = 11.sp, maxLines = 1)
                     }
                 }
             }

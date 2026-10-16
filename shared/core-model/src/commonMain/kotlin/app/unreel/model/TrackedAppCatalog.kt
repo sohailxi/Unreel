@@ -31,10 +31,80 @@ object TrackedAppCatalog {
             category = CATEGORY_SHORT_VIDEO,
         ),
         TrackedApp(
+            id = "instagram_instander",
+            platform = Platform.ANDROID,
+            displayName = "Instagram Reels",
+            packageOrTokenRef = "com.instander.android",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "instagram_aero",
+            platform = Platform.ANDROID,
+            displayName = "Instagram Reels",
+            packageOrTokenRef = "com.aeroinsta.android",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "instagram_honista",
+            platform = Platform.ANDROID,
+            displayName = "Instagram Reels",
+            packageOrTokenRef = "com.honista.android",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
             id = "youtube",
             platform = Platform.ANDROID,
             displayName = "YouTube Shorts",
             packageOrTokenRef = "com.google.android.youtube",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "youtube_morphe",
+            platform = Platform.ANDROID,
+            displayName = "YouTube Shorts",
+            packageOrTokenRef = "app.morphe.android.youtube",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "youtube_revanced",
+            platform = Platform.ANDROID,
+            displayName = "YouTube Shorts",
+            packageOrTokenRef = "app.revanced.android.youtube",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "youtube_rvx",
+            platform = Platform.ANDROID,
+            displayName = "YouTube Shorts",
+            packageOrTokenRef = "app.rvx.android.youtube",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "youtube_vanced",
+            platform = Platform.ANDROID,
+            displayName = "YouTube Shorts",
+            packageOrTokenRef = "com.vanced.android.youtube",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "newpipe",
+            platform = Platform.ANDROID,
+            displayName = "NewPipe",
+            packageOrTokenRef = "org.schabi.newpipe",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "newpipe_sponsorblock",
+            platform = Platform.ANDROID,
+            displayName = "NewPipe",
+            packageOrTokenRef = "org.polymorphicshade.newpipe",
+            category = CATEGORY_SHORT_VIDEO,
+        ),
+        TrackedApp(
+            id = "libretube",
+            platform = Platform.ANDROID,
+            displayName = "LibreTube",
+            packageOrTokenRef = "io.github.junkfood.libretube",
             category = CATEGORY_SHORT_VIDEO,
         ),
         TrackedApp(
@@ -526,4 +596,30 @@ object TrackedAppCatalog {
 
     fun getCategory(packageOrId: String): String =
         packageToAppMap[packageOrId]?.category ?: idToAppMap[packageOrId]?.category ?: CATEGORY_SHORT_VIDEO
+
+    private val canonicalPackageMap: Map<String, String> = mapOf(
+        "app.morphe.android.youtube" to "com.google.android.youtube",
+        "app.revanced.android.youtube" to "com.google.android.youtube",
+        "app.rvx.android.youtube" to "com.google.android.youtube",
+        "com.vanced.android.youtube" to "com.google.android.youtube",
+        "org.schabi.newpipe" to "com.google.android.youtube",
+        "org.polymorphicshade.newpipe" to "com.google.android.youtube",
+        "io.github.junkfood.libretube" to "com.google.android.youtube",
+        "com.instander.android" to "com.instagram.android",
+        "com.aeroinsta.android" to "com.instagram.android",
+        "com.honista.android" to "com.instagram.android",
+        "com.instagram.lite" to "com.instagram.android",
+        "com.zhiliaoapp.musically.go" to "com.zhiliaoapp.musically",
+        "com.ss.android.ugc.trill" to "com.zhiliaoapp.musically",
+        "com.facebook.lite" to "com.facebook.katana",
+        "video.like.lite" to "video.like",
+        "com.kwai.video.lite" to "com.kwai.video",
+        "in.mohalla.video.lite" to "in.mohalla.video",
+        "com.eterno.shortvideos.lite" to "com.eterno.shortvideos",
+        "com.twitter.android.lite" to "com.twitter.android",
+    )
+
+    fun getCanonicalAppId(packageOrId: String): String =
+        canonicalPackageMap[packageOrId] ?: packageOrId
 }
+

@@ -224,23 +224,23 @@ private struct RuleRowView: View {
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(ruleKindTitle)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
+                Text(ruleKindTitle)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
-                    HStack(spacing: 3) {
-                        Image(systemName: "shield.lefthalf.filled")
-                            .font(.system(size: 9))
-                        Text(rule.strictness.name)
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 3) {
+                    Image(systemName: "shield.lefthalf.filled")
+                        .font(.system(size: 9))
+                    Text(rule.strictness.name)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
                 }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+                .foregroundStyle(.secondary)
 
                 Text(ruleParamSummary)
                     .font(.subheadline)
@@ -278,6 +278,8 @@ private struct ScreenTimeProtectionCardView: View {
                 Text("Screen Time Shielding")
                     .font(.headline)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Spacer()
                 if familyControlsManager.isAuthorized {
                     HStack(spacing: 4) {

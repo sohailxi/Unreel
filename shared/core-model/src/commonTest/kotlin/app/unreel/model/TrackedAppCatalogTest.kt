@@ -125,4 +125,28 @@ class TrackedAppCatalogTest {
         assertTrue(TrackedAppCatalog.isFeedScrolling("com.twitter.android"))
         assertFalse(TrackedAppCatalog.isFeedScrolling("com.instagram.android"))
     }
+
+    @Test
+    fun `modded and third party YouTube and Instagram packages are supported and mapped to canonical app IDs`() {
+        // Morphe / RVX / ReVanced / Vanced YouTube packages
+        assertTrue(TrackedAppCatalog.isSupported("app.morphe.android.youtube"))
+        assertTrue(TrackedAppCatalog.isSupported("app.revanced.android.youtube"))
+        assertTrue(TrackedAppCatalog.isSupported("app.rvx.android.youtube"))
+        assertTrue(TrackedAppCatalog.isSupported("com.vanced.android.youtube"))
+        assertTrue(TrackedAppCatalog.allAndroidPackages.contains("app.morphe.android.youtube"))
+        assertTrue(TrackedAppCatalog.allAndroidPackages.contains("app.revanced.android.youtube"))
+
+        assertEquals("YouTube Shorts", TrackedAppCatalog.getDisplayName("app.morphe.android.youtube"))
+        assertEquals("YouTube Shorts", TrackedAppCatalog.getDisplayName("app.revanced.android.youtube"))
+
+        assertEquals("com.google.android.youtube", TrackedAppCatalog.getCanonicalAppId("app.morphe.android.youtube"))
+        assertEquals("com.google.android.youtube", TrackedAppCatalog.getCanonicalAppId("app.revanced.android.youtube"))
+        assertEquals("com.google.android.youtube", TrackedAppCatalog.getCanonicalAppId("com.google.android.youtube"))
+
+        // Instander / modded Instagram
+        assertTrue(TrackedAppCatalog.isSupported("com.instander.android"))
+        assertEquals("Instagram Reels", TrackedAppCatalog.getDisplayName("com.instander.android"))
+        assertEquals("com.instagram.android", TrackedAppCatalog.getCanonicalAppId("com.instander.android"))
+    }
 }
+

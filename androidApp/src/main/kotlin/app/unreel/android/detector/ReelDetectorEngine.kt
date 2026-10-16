@@ -56,9 +56,11 @@ class ReelDetectorEngine(
             val dwellMs = elapsedMs.coerceAtMost(MAX_DWELL_MS)
             lastEventTimestamp = now
 
+            val canonicalAppId = app.unreel.model.TrackedAppCatalog.getCanonicalAppId(packageName)
+
             return ReelEvent(
                 id = "reel-$packageName-$currentMs",
-                appId = packageName,
+                appId = canonicalAppId,
                 tsUtc = now,
                 dwellMs = dwellMs,
                 source = DataSource.EXACT,
@@ -69,9 +71,11 @@ class ReelDetectorEngine(
         lastEventPackage = packageName
         lastEventTimestamp = now
 
+        val canonicalAppId = app.unreel.model.TrackedAppCatalog.getCanonicalAppId(packageName)
+
         return ReelEvent(
             id = "reel-$packageName-$currentMs",
-            appId = packageName,
+            appId = canonicalAppId,
             tsUtc = now,
             dwellMs = DEFAULT_INITIAL_DWELL_MS,
             source = DataSource.EXACT,
