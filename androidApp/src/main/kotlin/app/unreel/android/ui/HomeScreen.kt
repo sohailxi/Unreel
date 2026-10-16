@@ -7,18 +7,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FilterChip
+import androidx.compose.ui.text.style.TextOverflow
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -128,6 +135,26 @@ fun calculateGoalProgress(currentReels: Int, targetReels: Int): Float {
     return (currentReels.toFloat() / targetReels).coerceIn(0f, 1f)
 }
 
+fun getTrackedAppLabel(selectedAppId: String?): String =
+    selectedAppId?.let { app.unreel.model.TrackedAppCatalog.getDisplayName(it) } ?: "All Feeds & Reels"
+
+val FILTER_SHORT_FORM_APPS = listOf(
+    "com.instagram.android" to "Instagram Reels",
+    "com.google.android.youtube" to "YouTube Shorts",
+    "com.zhiliaoapp.musically" to "TikTok",
+    "com.snapchat.android" to "Snapchat",
+    "com.facebook.katana" to "Facebook Reels",
+    "in.mohalla.video" to "Moj",
+    "com.eterno.shortvideos" to "Josh",
+    "com.reddit.frontpage" to "Reddit",
+    "com.twitter.android" to "X (Twitter)",
+    "com.instagram.barcelona" to "Threads",
+    "com.pinterest" to "Pinterest",
+    "video.like" to "Likee",
+    "com.kwai.video" to "Kwai",
+    "com.bd.nproject" to "Lemon8",
+)
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
@@ -216,18 +243,25 @@ fun HomeScreenContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(end = 8.dp),
+            ) {
                 Text(
                     text = "Today's Scroll",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Tracked app: ${state.selectedAppId ?: "All Apps"}",
+                    text = "Tracked app: ${getTrackedAppLabel(state.selectedAppId)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -262,6 +296,27 @@ fun HomeScreenContent(
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
+            }
+        }
+
+        // Short-Form & Reel Apps Filter Chips
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item {
+                FilterChip(
+                    selected = state.selectedAppId == null,
+                    onClick = { onIntent(HomeIntent.SelectApp(null)) },
+                    label = { Text("All Feeds & Reels") },
+                )
+            }
+            items(FILTER_SHORT_FORM_APPS) { (appId, label) ->
+                FilterChip(
+                    selected = state.selectedAppId == appId,
+                    onClick = { onIntent(HomeIntent.SelectApp(appId)) },
+                    label = { Text(label) },
+                )
             }
         }
 
@@ -338,7 +393,7 @@ private fun TodayUsageCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom,
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -351,18 +406,23 @@ private fun TodayUsageCard(
                         )
                         Text(
                             text = "$totalReels",
-                            fontSize = 44.sp,
+                            fontSize = 36.sp,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
                         )
                     }
                     Text(
                         text = "reels watched",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
                     )
                 }
-                Column(horizontalAlignment = Alignment.End) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.End,
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -375,15 +435,17 @@ private fun TodayUsageCard(
                         )
                         Text(
                             text = formatDwellTime(durationMs),
-                            fontSize = 24.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
                         )
                     }
                     Text(
                         text = "total time",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
                     )
                 }
             }
@@ -449,6 +511,7 @@ private fun ActiveSessionCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -458,7 +521,7 @@ private fun ActiveSessionCard(
                         .clip(CircleShape)
                         .background(Color(0xFF00CEC9)),
                 )
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -474,6 +537,8 @@ private fun ActiveSessionCard(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Row(
@@ -490,6 +555,8 @@ private fun ActiveSessionCard(
                             text = "$reelCount reels • ${formatDwellTime(durationMs)}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -519,6 +586,9 @@ private fun FocusScoreCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -716,11 +786,14 @@ fun ServiceStatusCard(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -739,6 +812,8 @@ fun ServiceStatusCard(
 
                 FilledTonalButton(
                     onClick = onToggleService,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.defaultMinSize(minHeight = 36.dp, minWidth = 1.dp),
                     colors = if (status.isServiceRunning) {
                         ButtonDefaults.filledTonalButtonColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -757,9 +832,10 @@ fun ServiceStatusCard(
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (status.isServiceRunning) "Stop" else "Start Service")
+                    Text(if (status.isServiceRunning) "Stop" else "Start Service", fontSize = 12.sp, maxLines = 1)
                 }
             }
+
 
             // Expanded Permissions Checklist
             if (isExpanded) {
@@ -861,7 +937,9 @@ private fun PermissionRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -889,7 +967,7 @@ private fun PermissionRow(
                                 tint = Color(0xFF00B894),
                             )
                         },
-                        label = { Text("Active") },
+                        label = { Text("Active", fontSize = 11.sp) },
                         colors = SuggestionChipDefaults.suggestionChipColors(
                             containerColor = Color(0xFF00B894).copy(alpha = 0.15f),
                             labelColor = Color(0xFF00B894),
@@ -898,12 +976,14 @@ private fun PermissionRow(
                 } else {
                     FilledTonalButton(
                         onClick = onAction,
-                        modifier = Modifier.height(34.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 36.dp, minWidth = 1.dp),
                     ) {
-                        Text(actionLabel, fontSize = 12.sp)
+                        Text(actionLabel, fontSize = 11.sp, maxLines = 1)
                     }
                 }
             }
+
 
             Text(
                 text = description,

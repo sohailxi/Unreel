@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -72,6 +73,15 @@ fun formatTrendDescription(trend: TrendResult): String {
     return "$directionLabel (${formatTrendPercent(trend.percentChange)})"
 }
 
+fun formatSessionsAndOpens(sessions: Int, opens: Int): String {
+    val sesText = "$sessions ses"
+    val openText = if (opens == 1) "$opens open" else "$opens opens"
+    return "$sesText • $openText"
+}
+
+fun getStatsAppLabel(selectedAppId: String?): String =
+    selectedAppId?.let { app.unreel.model.TrackedAppCatalog.getDisplayName(it) } ?: "All Feeds & Reels"
+
 @Composable
 fun StatsScreen(
     viewModel: StatsViewModel,
@@ -103,7 +113,11 @@ fun StatsScreenContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .padding(end = 8.dp),
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -121,7 +135,7 @@ fun StatsScreenContent(
                         )
                     }
                     Text(
-                        text = "Historical scroll analytics",
+                        text = "Historical scroll analytics • ${getStatsAppLabel(state.selectedAppId)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -164,6 +178,29 @@ fun StatsScreenContent(
             }
         }
 
+        // Short-Form & Reel Apps Filter Chips
+        item {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    FilterChip(
+                        selected = state.selectedAppId == null,
+                        onClick = { onIntent(StatsIntent.SelectApp(null)) },
+                        label = { Text("All Feeds & Reels") },
+                    )
+                }
+                items(FILTER_SHORT_FORM_APPS) { (appId, label) ->
+                    FilterChip(
+                        selected = state.selectedAppId == appId,
+                        onClick = { onIntent(StatsIntent.SelectApp(appId)) },
+                        label = { Text(label) },
+                    )
+                }
+            }
+        }
+
         // Time Range Selector
         item {
             Row(
@@ -201,10 +238,13 @@ fun StatsScreenContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -213,22 +253,27 @@ fun StatsScreenContent(
                                 imageVector = Icons.Rounded.VideoLibrary,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(22.dp),
                             )
                             Text(
                                 text = "${state.averageDailyReels}",
-                                fontSize = 28.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
                             )
                         }
                         Text(
                             text = "Daily Avg Reels",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
                         )
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -237,19 +282,21 @@ fun StatsScreenContent(
                                 imageVector = Icons.Rounded.Schedule,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(22.dp),
                             )
                             Text(
                                 text = formatDwellTime(state.averageDailyDurationMs),
-                                fontSize = 28.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
                             )
                         }
                         Text(
                             text = "Daily Avg Time",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
                         )
                     }
                 }
@@ -332,7 +379,7 @@ private fun TrendCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
@@ -346,6 +393,9 @@ private fun TrendCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -353,13 +403,14 @@ private fun TrendCard(
                         imageVector = trendIcon,
                         contentDescription = null,
                         tint = trendColor,
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(24.dp),
                     )
                     Text(
                         text = formatTrendDescription(trend),
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = trendColor,
+                        maxLines = 1,
                     )
                 }
                 SuggestionChip(
@@ -375,7 +426,7 @@ private fun TrendCard(
                             modifier = Modifier.size(14.dp),
                         )
                     },
-                    label = { Text(trend.confidence.name) },
+                    label = { Text(trend.confidence.name, fontSize = 11.sp) },
                 )
             }
         }
@@ -399,7 +450,12 @@ private fun DailyHistoryRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -416,43 +472,12 @@ private fun DailyHistoryRow(
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Repeat,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(12.dp),
-                        )
-                        Text(
-                            text = "${daily.sessions} sessions",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(12.dp),
-                        )
-                        Text(
-                            text = "${daily.opens} opens",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                Text(
+                    text = formatSessionsAndOpens(daily.sessions, daily.opens),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
@@ -470,3 +495,4 @@ private fun DailyHistoryRow(
         }
     }
 }
+

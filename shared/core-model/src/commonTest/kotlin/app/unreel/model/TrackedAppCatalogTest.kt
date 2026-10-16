@@ -85,4 +85,44 @@ class TrackedAppCatalogTest {
         assertTrue(packages.contains("com.twitter.android"))
         assertTrue(packages.size >= 16)
     }
+
+    @Test
+    fun `short video platforms include global and regional reel apps like Moj Josh SnackVideo and Lemon8`() {
+        val shortVideoApps = TrackedAppCatalog.getAppsByCategory(TrackedAppCatalog.CATEGORY_SHORT_VIDEO)
+        val names = shortVideoApps.map { it.displayName }.toSet()
+
+        assertTrue(names.contains("Moj"), "Expected Moj in short video apps")
+        assertTrue(names.contains("Josh"), "Expected Josh in short video apps")
+        assertTrue(names.contains("SnackVideo"), "Expected SnackVideo in short video apps")
+        assertTrue(names.contains("Lemon8"), "Expected Lemon8 in short video apps")
+        assertTrue(names.contains("Douyin"), "Expected Douyin in short video apps")
+        assertTrue(names.contains("Chingari"), "Expected Chingari in short video apps")
+        assertTrue(names.contains("Rizzle"), "Expected Rizzle in short video apps")
+        assertTrue(names.contains("Hipi"), "Expected Hipi in short video apps")
+        assertTrue(names.contains("Clapper"), "Expected Clapper in short video apps")
+    }
+
+    @Test
+    fun `catalog includes iOS bundle IDs and platform filtering`() {
+        val iosApps = TrackedAppCatalog.getAppsByPlatform(Platform.IOS)
+        assertTrue(iosApps.isNotEmpty(), "Expected iOS apps to be cataloged")
+
+        val iosBundles = TrackedAppCatalog.allIosBundleIds
+        assertTrue(iosBundles.contains("com.burbn.instagram"))
+        assertTrue(iosBundles.contains("com.google.ios.youtube"))
+        assertTrue(iosBundles.contains("com.zhiliaoapp.musically"))
+        assertTrue(iosBundles.contains("com.toyopagroup.picaboo"))
+    }
+
+    @Test
+    fun `isShortVideo and isFeedScrolling helper methods classify packages accurately`() {
+        assertTrue(TrackedAppCatalog.isShortVideo("com.instagram.android"))
+        assertTrue(TrackedAppCatalog.isShortVideo("com.google.android.youtube"))
+        assertTrue(TrackedAppCatalog.isShortVideo("in.mohalla.video")) // Moj
+        assertFalse(TrackedAppCatalog.isShortVideo("com.reddit.frontpage"))
+
+        assertTrue(TrackedAppCatalog.isFeedScrolling("com.reddit.frontpage"))
+        assertTrue(TrackedAppCatalog.isFeedScrolling("com.twitter.android"))
+        assertFalse(TrackedAppCatalog.isFeedScrolling("com.instagram.android"))
+    }
 }

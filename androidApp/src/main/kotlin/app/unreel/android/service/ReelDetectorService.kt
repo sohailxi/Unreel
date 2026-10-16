@@ -53,6 +53,13 @@ class ReelDetectorService : AccessibilityService(), KoinComponent {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        try {
+            val info = serviceInfo ?: android.accessibilityservice.AccessibilityServiceInfo()
+            info.packageNames = app.unreel.model.TrackedAppCatalog.allAndroidPackages.toTypedArray()
+            serviceInfo = info
+        } catch (t: Throwable) {
+            logger.w(t) { "Could not dynamically update AccessibilityServiceInfo packageNames" }
+        }
         _isConnected.value = true
         logger.i { "ReelDetectorService connected" }
     }

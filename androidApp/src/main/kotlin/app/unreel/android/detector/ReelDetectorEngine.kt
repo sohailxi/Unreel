@@ -33,7 +33,9 @@ class ReelDetectorEngine(
             return null
         }
 
-        if (eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+        val isScrollOrPageSnap = eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED ||
+            eventType == AccessibilityEvent.TYPE_VIEW_SELECTED
+        if (!isScrollOrPageSnap) {
             return null
         }
 

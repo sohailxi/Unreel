@@ -169,4 +169,58 @@ class ReelDetectorEngineTest {
         assertNotNull(twitterEvent)
         assertEquals("com.twitter.android", twitterEvent.appId)
     }
+
+    @Test
+    fun `page snap event TYPE_VIEW_SELECTED produces valid ReelEvent for short video pager transitions`() {
+        val snapEvent = detector.processEvent(
+            packageName = "com.instagram.android",
+            eventType = AccessibilityEvent.TYPE_VIEW_SELECTED,
+        )
+        assertNotNull(snapEvent)
+        assertEquals("com.instagram.android", snapEvent.appId)
+        assertEquals(DataSource.EXACT, snapEvent.source)
+    }
+
+    @Test
+    fun `consecutive scroll and page snap events during single reel swipe are debounced to single event`() {
+        val firstEvent = detector.processEvent(
+            packageName = "com.zhiliaoapp.musically",
+            eventType = AccessibilityEvent.TYPE_VIEW_SCROLLED,
+        )
+        assertNotNull(firstEvent)
+
+        // Pager snap event fires 100ms later during same swipe gesture
+        fakeClock.advanceBy(100L)
+        val snapEvent = detector.processEvent(
+            packageName = "com.zhiliaoapp.musically",
+            eventType = AccessibilityEvent.TYPE_VIEW_SELECTED,
+        )
+        assertNull(snapEvent, "Second event during same swipe should be debounced")
+    }
+
+    @Test
+    fun `global short video apps like Moj Josh SnackVideo and Lemon8 produce valid reel events`() {
+        val mojEvent = detector.processEvent(
+            packageName = "in.mohalla.video",
+            eventType = AccessibilityEvent.TYPE_VIEW_SCROLLED,
+        )
+        assertNotNull(mojEvent)
+        assertEquals("in.mohalla.video", mojEvent.appId)
+
+        fakeClock.advanceBy(3_000L)
+        val joshEvent = detector.processEvent(
+            packageName = "com.eterno.shortvideos",
+            eventType = AccessibilityEvent.TYPE_VIEW_SELECTED,
+        )
+        assertNotNull(joshEvent)
+        assertEquals("com.eterno.shortvideos", joshEvent.appId)
+
+        fakeClock.advanceBy(3_000L)
+        val lemon8Event = detector.processEvent(
+            packageName = "com.bd.nproject",
+            eventType = AccessibilityEvent.TYPE_VIEW_SCROLLED,
+        )
+        assertNotNull(lemon8Event)
+        assertEquals("com.bd.nproject", lemon8Event.appId)
+    }
 }

@@ -38,4 +38,18 @@ class StatsScreenTest {
         )
         assertEquals("Not enough data", formatTrendDescription(lowConfidence))
     }
+
+    @Test
+    fun `formatSessionsAndOpens formats compact summary for narrower screens`() {
+        assertEquals("3 ses • 12 opens", formatSessionsAndOpens(sessions = 3, opens = 12))
+        assertEquals("1 ses • 1 open", formatSessionsAndOpens(sessions = 1, opens = 1))
+    }
+
+    @Test
+    fun `getStatsAppLabel returns friendly label for specific apps and default for all`() {
+        assertEquals("All Feeds & Reels", getStatsAppLabel(null))
+        assertEquals("Instagram Reels", getStatsAppLabel("com.instagram.android"))
+        assertEquals("Reddit", getStatsAppLabel("com.reddit.frontpage"))
+    }
 }
+

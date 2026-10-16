@@ -77,5 +77,13 @@ class HomeScreenTest {
         assertEquals("Setup Required", setupTitle)
         assertTrue(setupDesc.contains("permissions"))
     }
+
+    @Test
+    fun `getTrackedAppLabel returns friendly label for specific apps and default for all`() {
+        assertEquals("All Feeds & Reels", getTrackedAppLabel(null))
+        assertEquals("Instagram Reels", getTrackedAppLabel("com.instagram.android"))
+        assertEquals("YouTube Shorts", getTrackedAppLabel("com.google.android.youtube"))
+        assertEquals("Moj", getTrackedAppLabel("in.mohalla.video"))
+    }
 }
 
