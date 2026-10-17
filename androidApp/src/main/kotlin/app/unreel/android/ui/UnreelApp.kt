@@ -8,15 +8,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MovieFilter
 import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -38,8 +43,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.unreel.model.DataSource
+import app.unreel.presentation.home.HomeIntent
 import app.unreel.presentation.home.HomeViewModel
 import app.unreel.presentation.rules.RulesViewModel
+import app.unreel.presentation.stats.StatsIntent
 import app.unreel.presentation.stats.StatsViewModel
 import com.russhwolf.settings.Settings
 import org.koin.compose.koinInject
@@ -54,6 +63,137 @@ enum class AppTab(
     HOME("Scroll", Icons.Rounded.PlayCircle, Icons.Outlined.PlayCircleOutline),
     STATS("Trends", Icons.Rounded.BarChart, Icons.Outlined.BarChart),
     RULES("Limits", Icons.Rounded.Shield, Icons.Outlined.Shield),
+}
+
+fun getTopAppBarTitle(tab: AppTab): String = when (tab) {
+    AppTab.HOME -> "Unreel"
+    AppTab.STATS -> "Trends"
+    AppTab.RULES -> "Limits & Rules"
+}
+
+@Composable
+fun DataSourceBadge(
+    source: DataSource,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier,
+        onClick = onClick ?: {},
+        enabled = onClick != null,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        ) {
+            Icon(
+                imageVector = if (source == DataSource.EXACT) Icons.Rounded.Verified else Icons.Rounded.Info,
+                contentDescription = source.name,
+                modifier = Modifier.size(14.dp),
+                tint = if (source == DataSource.EXACT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = source.name,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UnreelTopAppBar(
+    selectedTab: AppTab,
+    homeSource: DataSource,
+    statsSource: DataSource,
+    onRefreshHome: () -> Unit,
+    onRefreshStats: () -> Unit,
+    onOpenGuide: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        modifier = modifier,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (selectedTab == AppTab.HOME) {
+                    Icon(
+                        imageVector = Icons.Rounded.MovieFilter,
+                        contentDescription = "Unreel Logo",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                Text(
+                    text = getTopAppBarTitle(selectedTab),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        },
+        actions = {
+            when (selectedTab) {
+                AppTab.HOME -> {
+                    DataSourceBadge(
+                        source = homeSource,
+                        onClick = onRefreshHome,
+                    )
+                    IconButton(onClick = onRefreshHome) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = "Refresh data",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(onClick = onOpenGuide) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.HelpOutline,
+                            contentDescription = "Setup Guide & Privacy",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                AppTab.STATS -> {
+                    DataSourceBadge(
+                        source = statsSource,
+                        onClick = onRefreshStats,
+                    )
+                    IconButton(onClick = onRefreshStats) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = "Refresh data",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(onClick = onOpenGuide) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.HelpOutline,
+                            contentDescription = "Setup Guide & Privacy",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                AppTab.RULES -> {
+                    IconButton(onClick = onOpenGuide) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.HelpOutline,
+                            contentDescription = "Setup Guide & Privacy",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,49 +220,19 @@ fun UnreelApp(
     }
 
     var selectedTab by remember { mutableStateOf(AppTab.HOME) }
+    val homeState by homeViewModel.state.collectAsStateWithLifecycle()
+    val statsState by statsViewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Rounded.MovieFilter,
-                            contentDescription = "Unreel Logo",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp),
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Unreel",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                                text = "Reclaim your time",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { isOnboardingCompleted = false },
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.HelpOutline,
-                            contentDescription = "Setup Guide & Privacy",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
+            UnreelTopAppBar(
+                selectedTab = selectedTab,
+                homeSource = homeState.source,
+                statsSource = statsState.dataSource,
+                onRefreshHome = { homeViewModel.onIntent(HomeIntent.Refresh) },
+                onRefreshStats = { statsViewModel.onIntent(StatsIntent.Refresh) },
+                onOpenGuide = { isOnboardingCompleted = false },
             )
         },
         bottomBar = {

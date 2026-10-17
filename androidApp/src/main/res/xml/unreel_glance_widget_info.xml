@@ -10,4 +10,5 @@
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/glance_default_loading_layout"
+    android:previewLayout="@layout/unreel_glance_widget_preview"
     android:description="@string/widget_description" />

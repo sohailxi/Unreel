@@ -12,8 +12,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.TrendingDown
@@ -34,6 +39,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -41,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -107,100 +114,6 @@ fun StatsScreenContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .padding(end = 8.dp),
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Insights,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp),
-                        )
-                        Text(
-                            text = "Usage Trends",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                    Text(
-                        text = "Historical scroll analytics • ${getStatsAppLabel(state.selectedAppId)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    SuggestionChip(
-                        onClick = { onIntent(StatsIntent.Refresh) },
-                        icon = {
-                            Icon(
-                                imageVector = if (state.dataSource == DataSource.EXACT) {
-                                    Icons.Rounded.Verified
-                                } else {
-                                    Icons.Rounded.Info
-                                },
-                                contentDescription = state.dataSource.name,
-                                modifier = Modifier.size(16.dp),
-                                tint = if (state.dataSource == DataSource.EXACT) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.secondary
-                                },
-                            )
-                        },
-                        label = { Text(state.dataSource.name) },
-                        colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        ),
-                    )
-                    IconButton(onClick = { onIntent(StatsIntent.Refresh) }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Refresh,
-                            contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
-            }
-        }
-
-        // Short-Form & Reel Apps Filter Chips
-        item {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item {
-                    FilterChip(
-                        selected = state.selectedAppId == null,
-                        onClick = { onIntent(StatsIntent.SelectApp(null)) },
-                        label = { Text("All Feeds & Reels") },
-                    )
-                }
-                items(FILTER_SHORT_FORM_APPS) { (appId, label) ->
-                    FilterChip(
-                        selected = state.selectedAppId == appId,
-                        onClick = { onIntent(StatsIntent.SelectApp(appId)) },
-                        label = { Text(label) },
-                    )
-                }
-            }
-        }
-
         // Time Range Selector
         item {
             Row(
@@ -300,6 +213,26 @@ fun StatsScreenContent(
                         )
                     }
                 }
+            }
+        }
+
+        // App Ranking by Reels Chart Card for selected time range
+        item {
+            AppRankingChartCard(
+                breakdown = state.appBreakdown,
+                title = "App Ranking (${state.selectedDays}d)",
+                subtitle = "Cumulative reels watched per app by ranking",
+            )
+        }
+
+        // Reels Watched by App Ranking Chart Card
+        if (state.appBreakdown.isNotEmpty()) {
+            item {
+                AppRankingChartCard(
+                    breakdown = state.appBreakdown,
+                    title = "Reels Watched by App (${state.selectedDays}d)",
+                    subtitle = "Ranked consumption for the selected period",
+                )
             }
         }
 

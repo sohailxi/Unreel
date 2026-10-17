@@ -85,5 +85,34 @@ class HomeScreenTest {
         assertEquals("YouTube Shorts", getTrackedAppLabel("com.google.android.youtube"))
         assertEquals("Moj", getTrackedAppLabel("in.mohalla.video"))
     }
+
+    @Test
+    fun `rankAppUsage sorts by reels descending and filters empty records`() {
+        val today = LocalDate(2026, 10, 16)
+        val usage1 = DailyUsage(today, "com.instagram.android", 10, 300_000L, 1, 1, DataSource.EXACT)
+        val usage2 = DailyUsage(today, "com.google.android.youtube", 45, 1_200_000L, 2, 2, DataSource.EXACT)
+        val usage3 = DailyUsage(today, "com.zhiliaoapp.musically", 0, 0L, 0, 0, DataSource.EXACT)
+        val usageAggregate = DailyUsage(today, "aggregate", 55, 1_500_000L, 3, 3, DataSource.EXACT)
+
+        val ranked = rankAppUsage(listOf(usage1, usage2, usage3, usageAggregate))
+        assertEquals(2, ranked.size)
+        assertEquals("com.google.android.youtube", ranked[0].appId)
+        assertEquals(45, ranked[0].reels)
+        assertEquals("com.instagram.android", ranked[1].appId)
+        assertEquals(10, ranked[1].reels)
+    }
+
+    @Test
+    fun `calculateReelPercentage and calculateBarFraction compute correct values`() {
+        assertEquals(50, calculateReelPercentage(reels = 25, totalReels = 50))
+        assertEquals(100, calculateReelPercentage(reels = 50, totalReels = 50))
+        assertEquals(0, calculateReelPercentage(reels = 0, totalReels = 50))
+        assertEquals(0, calculateReelPercentage(reels = 10, totalReels = 0))
+
+        assertEquals(0.5f, calculateBarFraction(reels = 25, maxReels = 50))
+        assertEquals(1f, calculateBarFraction(reels = 50, maxReels = 50))
+        assertEquals(0f, calculateBarFraction(reels = 0, maxReels = 50))
+    }
 }
+
 

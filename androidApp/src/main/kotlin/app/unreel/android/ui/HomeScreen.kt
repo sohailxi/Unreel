@@ -27,6 +27,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.ui.text.style.TextOverflow
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.FiberManualRecord
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.unreel.model.DailyUsage
 import app.unreel.model.DataSource
 import app.unreel.model.Decision
 import app.unreel.presentation.home.HomeIntent
@@ -238,86 +240,17 @@ fun HomeScreenContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // App Header / Status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .padding(end = 8.dp),
-            ) {
-                Text(
-                    text = "Today's Scroll",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "Tracked app: ${getTrackedAppLabel(state.selectedAppId)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SuggestionChip(
-                    onClick = { onIntent(HomeIntent.Refresh) },
-                    icon = {
-                        Icon(
-                            imageVector = if (state.source == DataSource.EXACT) {
-                                Icons.Rounded.Verified
-                            } else {
-                                Icons.Rounded.Info
-                            },
-                            contentDescription = state.source.name,
-                            modifier = Modifier.size(16.dp),
-                            tint = if (state.source == DataSource.EXACT) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.secondary
-                            },
-                        )
-                    },
-                    label = { Text(state.source.name) },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    ),
-                )
-                IconButton(onClick = { onIntent(HomeIntent.Refresh) }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = "Refresh data",
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
-        }
-
-        // Short-Form & Reel Apps Filter Chips
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                FilterChip(
-                    selected = state.selectedAppId == null,
-                    onClick = { onIntent(HomeIntent.SelectApp(null)) },
-                    label = { Text("All Feeds & Reels") },
-                )
-            }
-            items(FILTER_SHORT_FORM_APPS) { (appId, label) ->
-                FilterChip(
-                    selected = state.selectedAppId == appId,
-                    onClick = { onIntent(HomeIntent.SelectApp(appId)) },
-                    label = { Text(label) },
-                )
-            }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Today's Scroll",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "All short-video feeds & reels",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         // Service & Permissions Status Card
@@ -350,6 +283,14 @@ fun HomeScreenContent(
             durationMs = state.totalDurationMs,
             goalReels = state.goalReels,
         )
+
+        // Reels Watched by App Ranking Chart Card
+        AppRankingChartCard(
+            breakdown = state.appBreakdown,
+            title = "Reels Watched by App",
+            subtitle = "Ranked scroll count across platforms",
+        )
+
 
         // Live Active Session Card (if any)
         state.activeSession?.let { session ->
@@ -490,6 +431,8 @@ private fun TodayUsageCard(
         }
     }
 }
+
+
 
 @Composable
 private fun ActiveSessionCard(
