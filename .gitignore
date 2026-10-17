@@ -56,6 +56,7 @@ Thumbs.db
 xcuserdata/
 DerivedData/
 *.xcuserstate
+*.local.xcconfig
 
 # Node / JS (if any)
 node_modules/

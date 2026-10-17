@@ -103,6 +103,56 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `observing today usage populates appBreakdown ordered by reels descending`() = runTest(testDispatcher) {
+        val today = LocalDate(2026, 10, 14)
+        val ig = "com.instagram.android"
+        val yt = "com.google.android.youtube"
+
+        usageRepository.saveDailyUsage(
+            DailyUsage(
+                localDate = today,
+                appId = ig,
+                reels = 20,
+                durationMs = 600_000L,
+                sessions = 2,
+                opens = 2,
+                source = DataSource.EXACT,
+            ),
+        )
+        usageRepository.saveDailyUsage(
+            DailyUsage(
+                localDate = today,
+                appId = yt,
+                reels = 45,
+                durationMs = 1_200_000L,
+                sessions = 3,
+                opens = 3,
+                source = DataSource.EXACT,
+            ),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(2, state.appBreakdown.size)
+        assertEquals(yt, state.appBreakdown[0].appId)
+        assertEquals(45, state.appBreakdown[0].reels)
+        assertEquals(ig, state.appBreakdown[1].appId)
+        assertEquals(20, state.appBreakdown[1].reels)
+
+        // Now filter by Instagram
+        viewModel.onIntent(HomeIntent.SelectApp(ig))
+        advanceUntilIdle()
+
+        val filteredState = viewModel.state.value
+        assertEquals(1, filteredState.appBreakdown.size)
+        assertEquals(ig, filteredState.appBreakdown[0].appId)
+        assertEquals(20, filteredState.appBreakdown[0].reels)
+    }
+
+
+    @Test
     fun `selecting specific app loads that app usage and evaluates limit rules`() = runTest(testDispatcher) {
         val today = LocalDate(2026, 10, 14)
         val igAppId = "com.instagram.android"

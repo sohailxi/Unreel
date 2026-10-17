@@ -71,6 +71,12 @@ class StatsViewModel(
                 val from = today.minus(days - 1, DateTimeUnit.DAY)
 
                 val history = usageRepository.getDailyUsageHistory(from = from, to = today, appId = appId)
+                val rawBreakdown = usageRepository.getUsageBreakdownByApp(from = from, to = today)
+                val filteredBreakdown = if (appId != null) {
+                    rawBreakdown.filter { it.appId == appId }
+                } else {
+                    rawBreakdown
+                }
                 val trend = metricsEngine.calculateTrend(history.map { it.reels.toLong() })
                 val totalReels = history.sumOf { it.reels }
                 val totalDurationMs = history.sumOf { it.durationMs }
@@ -84,6 +90,7 @@ class StatsViewModel(
                         selectedDays = days,
                         selectedAppId = appId,
                         dailyHistory = history,
+                        appBreakdown = filteredBreakdown,
                         trend = trend,
                         totalReels = totalReels,
                         totalDurationMs = totalDurationMs,

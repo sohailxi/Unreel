@@ -39,7 +39,20 @@ class InMemoryUsageRepository : UsageRepository {
         return if (appId != null) {
             dailyUsageMap[date to appId]
         } else {
-            dailyUsageMap.filterKeys { it.first == date }.values.firstOrNull()
+            val matching = dailyUsageMap.values.filter { it.localDate == date }
+            if (matching.isEmpty()) {
+                null
+            } else {
+                DailyUsage(
+                    localDate = date,
+                    appId = "ALL",
+                    reels = matching.sumOf { it.reels },
+                    durationMs = matching.sumOf { it.durationMs },
+                    sessions = matching.sumOf { it.sessions },
+                    opens = matching.sumOf { it.opens },
+                    source = matching.firstOrNull()?.source ?: app.unreel.model.DataSource.EXACT,
+                )
+            }
         }
     }
 
@@ -48,8 +61,35 @@ class InMemoryUsageRepository : UsageRepository {
             if (appId != null) {
                 map[date to appId]
             } else {
-                map.filterKeys { it.first == date }.values.firstOrNull()
+                val matching = map.values.filter { it.localDate == date }
+                if (matching.isEmpty()) {
+                    null
+                } else {
+                    DailyUsage(
+                        localDate = date,
+                        appId = "ALL",
+                        reels = matching.sumOf { it.reels },
+                        durationMs = matching.sumOf { it.durationMs },
+                        sessions = matching.sumOf { it.sessions },
+                        opens = matching.sumOf { it.opens },
+                        source = matching.firstOrNull()?.source ?: app.unreel.model.DataSource.EXACT,
+                    )
+                }
             }
+        }
+    }
+
+    override suspend fun getDailyUsageBreakdown(date: LocalDate): List<DailyUsage> {
+        return dailyUsageMap.values
+            .filter { it.localDate == date }
+            .sortedByDescending { it.reels }
+    }
+
+    override fun observeDailyUsageBreakdown(date: LocalDate): Flow<List<DailyUsage>> {
+        return _dailyUsageFlow.map { map ->
+            map.values
+                .filter { it.localDate == date }
+                .sortedByDescending { it.reels }
         }
     }
 
@@ -66,6 +106,24 @@ class InMemoryUsageRepository : UsageRepository {
         return dailyUsageMap.values.filter { usage ->
             usage.localDate in from..to && (appId == null || usage.appId == appId)
         }.sortedBy { it.localDate }
+    }
+
+    override suspend fun getUsageBreakdownByApp(from: LocalDate, to: LocalDate): List<DailyUsage> {
+        return dailyUsageMap.values
+            .filter { it.localDate in from..to }
+            .groupBy { it.appId }
+            .map { (appId, usages) ->
+                DailyUsage(
+                    localDate = from,
+                    appId = appId,
+                    reels = usages.sumOf { it.reels },
+                    durationMs = usages.sumOf { it.durationMs },
+                    sessions = usages.sumOf { it.sessions },
+                    opens = usages.sumOf { it.opens },
+                    source = usages.firstOrNull()?.source ?: app.unreel.model.DataSource.EXACT,
+                )
+            }
+            .sortedByDescending { it.reels }
     }
 
     override suspend fun getActiveSession(appId: String): Session? {

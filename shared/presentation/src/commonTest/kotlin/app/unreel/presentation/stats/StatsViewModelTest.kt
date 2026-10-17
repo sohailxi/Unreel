@@ -149,4 +149,35 @@ class StatsViewModelTest {
         assertEquals(1, state.dailyHistory.size)
         assertEquals(15, state.totalReels)
     }
+
+    @Test
+    fun `appBreakdown in stats populates cumulative usage per app for selected time range`() = runTest(testDispatcher) {
+        val day1 = LocalDate(2026, 10, 13)
+        val day2 = LocalDate(2026, 10, 14)
+        val ig = "com.instagram.android"
+        val yt = "com.google.android.youtube"
+
+        usageRepository.saveDailyUsage(
+            DailyUsage(day1, ig, 30, 900_000L, 2, 2, DataSource.EXACT),
+        )
+        usageRepository.saveDailyUsage(
+            DailyUsage(day2, ig, 40, 1_200_000L, 2, 2, DataSource.EXACT),
+        )
+        usageRepository.saveDailyUsage(
+            DailyUsage(day2, yt, 25, 750_000L, 1, 1, DataSource.EXACT),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(2, state.appBreakdown.size)
+        // Instagram has 30 + 40 = 70 reels
+        assertEquals(ig, state.appBreakdown[0].appId)
+        assertEquals(70, state.appBreakdown[0].reels)
+        // YouTube has 25 reels
+        assertEquals(yt, state.appBreakdown[1].appId)
+        assertEquals(25, state.appBreakdown[1].reels)
+    }
 }
+

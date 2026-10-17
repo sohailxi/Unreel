@@ -1,10 +1,13 @@
 package app.unreel.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import app.unreel.data.db.Daily_usage_record
 import app.unreel.data.db.GetDailyUsageAggregated
 import app.unreel.data.db.GetDailyUsageHistoryAggregated
+import app.unreel.data.db.GetUsageBreakdownByApp
+
 import app.unreel.data.db.Reel_event
 import app.unreel.data.db.Session_record
 import app.unreel.data.db.UnreelDatabase
@@ -110,6 +113,26 @@ class SqlDelightUsageRepository(
         }
     }
 
+    override suspend fun getDailyUsageBreakdown(date: LocalDate): List<DailyUsage> = withContext(ioDispatcher) {
+        db.dailyUsageQueries.getDailyUsageBreakdown(date.toString())
+            .executeAsList()
+            .map { it.toDomain() }
+    }
+
+    override fun observeDailyUsageBreakdown(date: LocalDate): Flow<List<DailyUsage>> {
+        return db.dailyUsageQueries.getDailyUsageBreakdown(date.toString())
+            .asFlow()
+            .mapToList(ioDispatcher)
+            .map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun getUsageBreakdownByApp(from: LocalDate, to: LocalDate): List<DailyUsage> = withContext(ioDispatcher) {
+        db.dailyUsageQueries.getUsageBreakdownByApp(fromDate = from.toString(), toDate = to.toString())
+            .executeAsList()
+            .map { it.toDomain(from) }
+    }
+
+
     override suspend fun getActiveSession(appId: String): Session? = withContext(ioDispatcher) {
         db.sessionQueries.getActiveSession(appId)
             .executeAsOneOrNull()
@@ -180,6 +203,17 @@ class SqlDelightUsageRepository(
         opens = opens.toInt(),
         source = DataSource.valueOf(source),
     )
+
+    private fun GetUsageBreakdownByApp.toDomain(fallbackDate: LocalDate): DailyUsage = DailyUsage(
+        localDate = local_date?.let { LocalDate.parse(it) } ?: fallbackDate,
+        appId = app_id,
+        reels = reels.toInt(),
+        durationMs = duration_ms,
+        sessions = sessions.toInt(),
+        opens = opens.toInt(),
+        source = DataSource.valueOf(source),
+    )
+
 
     private fun Session_record.toDomain(): Session = Session(
         id = id,

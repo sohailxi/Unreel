@@ -12,6 +12,7 @@ import app.unreel.model.Session
 data class HomeState(
     val isLoading: Boolean = true,
     val todayUsage: DailyUsage? = null,
+    val appBreakdown: List<DailyUsage> = emptyList(),
     val activeSession: Session? = null,
     val focusScore: FocusScore? = null,
     val goalReels: Int = 50,

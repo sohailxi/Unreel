@@ -108,11 +108,21 @@ class HomeViewModel(
                 val dayBoundary = DayBoundary(dayStartHour = dayStartHour)
                 val today = dayBoundary.toLocalDate(now, timeZone)
 
-                usageRepository.observeDailyUsage(today, appId)
+                combine(
+                    usageRepository.observeDailyUsage(today, appId),
+                    usageRepository.observeDailyUsageBreakdown(today),
+                ) { dailyUsage, breakdown ->
+                    val filteredBreakdown = if (appId != null) {
+                        breakdown.filter { it.appId == appId }
+                    } else {
+                        breakdown
+                    }
+                    dailyUsage to filteredBreakdown
+                }
                     .catch { e ->
                         _state.update { it.copy(errorMessage = e.message, isLoading = false) }
                     }
-                    .collect { dailyUsage ->
+                    .collect { (dailyUsage, breakdown) ->
                         val activeSession = if (appId != null) {
                             usageRepository.getActiveSession(appId)
                         } else {
@@ -131,6 +141,7 @@ class HomeViewModel(
                             current.copy(
                                 isLoading = false,
                                 todayUsage = dailyUsage,
+                                appBreakdown = breakdown,
                                 activeSession = activeSession,
                                 focusScore = focusScore,
                                 currentDecision = decision,

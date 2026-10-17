@@ -14,6 +14,7 @@ data class StatsState(
     val selectedDays: Int = 7,
     val selectedAppId: String? = null,
     val dailyHistory: List<DailyUsage> = emptyList(),
+    val appBreakdown: List<DailyUsage> = emptyList(),
     val trend: TrendResult = TrendResult(
         direction = TrendDirection.STEADY,
         percentChange = 0.0,

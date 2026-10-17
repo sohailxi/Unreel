@@ -50,3 +50,24 @@ FROM daily_usage_record
 WHERE local_date >= :from AND local_date <= :to
 GROUP BY local_date
 ORDER BY local_date ASC;
+
+getDailyUsageBreakdown:
+SELECT * FROM daily_usage_record
+WHERE local_date = :localDate
+ORDER BY reels DESC;
+
+getUsageBreakdownByApp:
+SELECT
+    MIN(local_date) AS local_date,
+    app_id,
+    CAST(COALESCE(SUM(reels), 0) AS INTEGER) AS reels,
+    CAST(COALESCE(SUM(duration_ms), 0) AS INTEGER) AS duration_ms,
+    CAST(COALESCE(SUM(sessions), 0) AS INTEGER) AS sessions,
+    CAST(COALESCE(SUM(opens), 0) AS INTEGER) AS opens,
+    COALESCE(MAX(source), 'EXACT') AS source
+FROM daily_usage_record
+WHERE local_date >= :fromDate AND local_date <= :toDate
+GROUP BY app_id
+ORDER BY reels DESC;
+
+

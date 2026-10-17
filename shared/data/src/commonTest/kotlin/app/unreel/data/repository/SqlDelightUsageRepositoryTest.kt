@@ -156,6 +156,82 @@ class SqlDelightUsageRepositoryTest {
     }
 
     @Test
+    fun getDailyUsageBreakdownReturnsAppsOrderedByReelsDescending() = runTest {
+        val usage1 = DailyUsage(
+            localDate = today,
+            appId = "com.instagram.android",
+            reels = 20,
+            durationMs = 100_000L,
+            sessions = 2,
+            opens = 2,
+            source = DataSource.EXACT,
+        )
+        val usage2 = DailyUsage(
+            localDate = today,
+            appId = "com.google.android.youtube",
+            reels = 45,
+            durationMs = 250_000L,
+            sessions = 3,
+            opens = 3,
+            source = DataSource.EXACT,
+        )
+
+        repository.saveDailyUsage(usage1)
+        repository.saveDailyUsage(usage2)
+
+        val breakdown = repository.getDailyUsageBreakdown(today)
+        assertEquals(2, breakdown.size)
+        assertEquals("com.google.android.youtube", breakdown[0].appId)
+        assertEquals(45, breakdown[0].reels)
+        assertEquals("com.instagram.android", breakdown[1].appId)
+        assertEquals(20, breakdown[1].reels)
+    }
+
+    @Test
+    fun observeDailyUsageBreakdownEmitsUpdates() = runTest {
+        val usage = DailyUsage(
+            localDate = today,
+            appId = "com.instagram.android",
+            reels = 10,
+            durationMs = 50_000L,
+            sessions = 1,
+            opens = 1,
+            source = DataSource.EXACT,
+        )
+
+        repository.observeDailyUsageBreakdown(today).test {
+            assertEquals(emptyList(), awaitItem())
+
+            repository.saveDailyUsage(usage)
+            val updatedList = awaitItem()
+            assertEquals(1, updatedList.size)
+            assertEquals("com.instagram.android", updatedList[0].appId)
+            assertEquals(10, updatedList[0].reels)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun getUsageBreakdownByAppAggregatesAcrossDates() = runTest {
+        val day1 = LocalDate(2026, 10, 12)
+        val day2 = LocalDate(2026, 10, 13)
+
+        repository.saveDailyUsage(DailyUsage(day1, "com.instagram.android", 10, 50_000L, 1, 1, DataSource.EXACT))
+        repository.saveDailyUsage(DailyUsage(day2, "com.instagram.android", 20, 100_000L, 2, 2, DataSource.EXACT))
+        repository.saveDailyUsage(DailyUsage(day1, "com.google.android.youtube", 5, 25_000L, 1, 1, DataSource.EXACT))
+
+        val breakdown = repository.getUsageBreakdownByApp(day1, day2)
+        assertEquals(2, breakdown.size)
+        assertEquals("com.instagram.android", breakdown[0].appId)
+        assertEquals(30, breakdown[0].reels)
+        assertEquals(150_000L, breakdown[0].durationMs)
+        assertEquals("com.google.android.youtube", breakdown[1].appId)
+        assertEquals(5, breakdown[1].reels)
+    }
+
+
+    @Test
     fun sessionLifecycleTracking() = runTest {
         val session = Session(
             id = "sess-1",

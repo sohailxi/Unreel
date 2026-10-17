@@ -16,9 +16,12 @@ interface UsageRepository {
 
     suspend fun getDailyUsage(date: LocalDate, appId: String? = null): DailyUsage?
     fun observeDailyUsage(date: LocalDate, appId: String? = null): Flow<DailyUsage?>
+    suspend fun getDailyUsageBreakdown(date: LocalDate): List<DailyUsage> = emptyList()
+    fun observeDailyUsageBreakdown(date: LocalDate): Flow<List<DailyUsage>> = kotlinx.coroutines.flow.emptyFlow()
     suspend fun saveDailyUsage(dailyUsage: DailyUsage)
 
     suspend fun getDailyUsageHistory(from: LocalDate, to: LocalDate, appId: String? = null): List<DailyUsage>
+    suspend fun getUsageBreakdownByApp(from: LocalDate, to: LocalDate): List<DailyUsage> = emptyList()
 
     suspend fun getActiveSession(appId: String): Session?
     suspend fun saveSession(session: Session)
