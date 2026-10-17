@@ -7,3 +7,19 @@ CURRENT_PROJECT_VERSION=1
 MARKETING_VERSION=1.0
 
 OTHER_LDFLAGS = $(inherited) -lsqlite3
+
+// Code signing defaults: allows local/CI builds without requiring an Apple Developer Team ID.
+// When developing on physical devices, set TEAM_ID in Config.local.xcconfig or below.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY =
+CODE_SIGN_IDENTITY[sdk=iphoneos*] =
+CODE_SIGNING_REQUIRED = NO
+DEVELOPMENT_TEAM = $(TEAM_ID)
+
+// Target iOS / iPadOS only (disable Mac Designed for iPad & visionOS)
+SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO
+SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO
+SUPPORTS_MACCATALYST = NO
+
+// Optional developer-specific local configuration (e.g. TEAM_ID = <YOUR_APPLE_TEAM_ID>)
+#include? "Config.local.xcconfig"

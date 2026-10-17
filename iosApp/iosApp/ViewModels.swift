@@ -14,6 +14,27 @@ final class HomeObservable: ObservableObject {
         self.unsubscribe = helper.observeHomeState(viewModel: vm) { [weak self] newState in
             Task { @MainActor in
                 self?.state = newState
+                let isBlocked = newState.currentDecision is DecisionBlock
+                let progress: Float? = newState.goalMinutes > 0
+                    ? Float(newState.totalDurationMs) / Float(newState.goalMinutes * 60_000)
+                    : nil
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let snap = WidgetUsageSnapshot(
+                    version: 1,
+                    date: dateFormatter.string(from: Date()),
+                    todayReels: Int(newState.totalReels),
+                    todayDurationMs: newState.totalDurationMs,
+                    sessionReels: Int(newState.activeSession?.reelCount ?? 0),
+                    activeSessionDurationMs: newState.activeSession?.durationMs ?? 0,
+                    limitProgress: progress,
+                    decisionReason: (newState.currentDecision as? DecisionBlock)?.reason,
+                    isBlocked: isBlocked,
+                    source: newState.source.name,
+                    updatedAtUtc: ISO8601DateFormatter().string(from: Date())
+                )
+                SnapshotReader.writeSnapshot(snap)
+                ActivityKitManager.shared.reloadWidgets()
             }
         }
     }

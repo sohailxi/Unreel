@@ -144,6 +144,27 @@ final class ActivityKitManager: ObservableObject {
             }
         }
 
+        // Persist latest snapshot to shared App Group for WidgetKit widgets
+        let isLimitReached = (state.limitProgress?.floatValue ?? 0) >= 1.0
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let isoFormatter = ISO8601DateFormatter()
+
+        let snapshot = WidgetUsageSnapshot(
+            version: 1,
+            date: dateFormatter.string(from: Date()),
+            todayReels: Int(state.todayReels),
+            todayDurationMs: state.todayDurationMs,
+            sessionReels: Int(state.sessionReels),
+            activeSessionDurationMs: 0,
+            limitProgress: state.limitProgress?.floatValue,
+            decisionReason: isLimitReached ? "Daily Limit Reached" : nil,
+            isBlocked: isLimitReached,
+            source: "ESTIMATED",
+            updatedAtUtc: isoFormatter.string(from: Date())
+        )
+        SnapshotReader.writeSnapshot(snapshot)
+
         // Reload WidgetKit timelines to display latest snapshot
         reloadWidgets()
     }

@@ -333,7 +333,7 @@ private struct ScreenTimeProtectionCardView: View {
                     .foregroundStyle(.primary)
                 }
                 .familyActivityPicker(isPresented: $isPickerPresented, selection: $familyControlsManager.activitySelection)
-                .onChange(of: familyControlsManager.activitySelection) { newSelection in
+                .onChange(of: familyControlsManager.activitySelection) { _, newSelection in
                     DeviceActivityManager.shared.startMonitoring(for: newSelection)
                 }
             }

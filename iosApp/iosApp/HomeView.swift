@@ -14,7 +14,7 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Today's Scroll")
                                     .font(.system(.title2, design: .rounded, weight: .bold))
-                                Text("Tracked app: \(state.selectedAppId ?? "All Apps")")
+                                Text("All short-video feeds & reels")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
@@ -63,6 +63,19 @@ struct HomeView: View {
                             durationMs: state.totalDurationMs,
                             goalReels: Int(state.goalReels)
                         )
+
+                        // Reels by App Breakdown
+                        if !state.appBreakdown.isEmpty {
+                            HomeAppBreakdownCardView(
+                                breakdown: state.appBreakdown,
+                                totalReels: Int(state.totalReels),
+                                selectedAppId: state.selectedAppId,
+                                onSelectApp: { appId in
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    viewModel.selectApp(appId: appId)
+                                }
+                            )
+                        }
 
                         // Active Session Card
                         if let session = state.activeSession {
@@ -455,4 +468,153 @@ private struct LiveSurfacesCardView: View {
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
+
+private struct HomeAppBreakdownCardView: View {
+    let breakdown: [DailyUsage]
+    let totalReels: Int
+    let selectedAppId: String?
+    let onSelectApp: (String?) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .foregroundStyle(Color.accentColor)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Reels by App")
+                            .font(.headline.weight(.bold))
+                        Text("Where you watched reels today")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                if selectedAppId != nil {
+                    Button(action: { onSelectApp(nil) }) {
+                        Text("Show all")
+                            .font(.caption2.weight(.semibold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            VStack(spacing: 10) {
+                ForEach(Array(breakdown.enumerated()), id: \.element.appId) { index, item in
+                    let rank = index + 1
+                    let isSelected = selectedAppId == item.appId
+                    let share = totalReels > 0 ? min(max(Double(item.reels) / Double(totalReels), 0.0), 1.0) : 0.0
+                    let percentText = "\(Int(share * 100))%"
+                    let displayName = TrackedAppCatalog.shared.getDisplayName(packageOrId: item.appId)
+                    let accentColor = appAccentColor(item.appId, rank: rank)
+                    let badgeColor = rankBadgeColor(rank)
+
+                    Button(action: {
+                        onSelectApp(isSelected ? nil : item.appId)
+                    }) {
+                        VStack(spacing: 8) {
+                            HStack(alignment: .center) {
+                                HStack(spacing: 8) {
+                                    Text("#\(rank)")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 3)
+                                        .background(badgeColor.opacity(0.18), in: Capsule())
+                                        .foregroundStyle(badgeColor)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(displayName)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+                                        Text(formatDwell(item.durationMs))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("\(item.reels) reels")
+                                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                        .foregroundStyle(accentColor)
+                                    Text(percentText)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+
+                            GeometryReader { geometry in
+                                ZStack(alignment: .leading) {
+                                    Capsule()
+                                        .fill(Color(uiColor: .tertiarySystemFill))
+                                        .frame(height: 6)
+                                    Capsule()
+                                        .fill(accentColor)
+                                        .frame(width: max(geometry.size.width * CGFloat(share), 0), height: 6)
+                                }
+                            }
+                            .frame(height: 6)
+                        }
+                        .padding(12)
+                        .background(
+                            isSelected ? Color.accentColor.opacity(0.12) : Color(uiColor: .tertiarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(isSelected ? Color.accentColor.opacity(0.4) : Color.clear, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(18)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func rankBadgeColor(_ rank: Int) -> Color {
+        switch rank {
+        case 1: return Color(red: 0.96, green: 0.65, blue: 0.14) // Gold
+        case 2: return Color(red: 0.55, green: 0.61, blue: 0.68) // Silver
+        case 3: return Color(red: 0.80, green: 0.50, blue: 0.35) // Bronze
+        default: return Color.secondary
+        }
+    }
+
+    private func appAccentColor(_ appId: String, rank: Int) -> Color {
+        let lower = appId.lowercased()
+        if lower.contains("instagram") || lower.contains("instander") { return Color(red: 0.88, green: 0.19, blue: 0.42) }
+        if lower.contains("youtube") { return Color(red: 1.0, green: 0.0, blue: 0.0) }
+        if lower.contains("musically") || lower.contains("tiktok") { return Color(red: 0.0, green: 0.81, blue: 0.79) }
+        if lower.contains("snapchat") { return Color(red: 1.0, green: 0.73, blue: 0.0) }
+        if lower.contains("facebook") || lower.contains("katana") { return Color(red: 0.09, green: 0.47, blue: 0.95) }
+        if lower.contains("reddit") { return Color(red: 1.0, green: 0.27, blue: 0.0) }
+        switch rank {
+        case 1: return Color.accentColor
+        case 2: return Color.teal
+        case 3: return Color.orange
+        default: return Color.secondary
+        }
+    }
+
+    private func formatDwell(_ ms: Int64) -> String {
+        let s = ms / 1000
+        let m = s / 60
+        let h = m / 60
+        if h > 0 {
+            return "\(h)h \(m % 60)m"
+        } else if m > 0 {
+            return "\(m)m"
+        } else {
+            return "\(s)s"
+        }
+    }
+}
+
 

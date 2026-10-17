@@ -53,7 +53,7 @@ struct StatsView: View {
                             Text("30d").tag(Int32(30))
                         }
                         .pickerStyle(.segmented)
-                        .onChange(of: selectedDays) { newDays in
+                        .onChange(of: selectedDays) { _, newDays in
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             viewModel.selectTimeRange(days: newDays)
                         }
@@ -66,6 +66,76 @@ struct StatsView: View {
                             avgReels: Int(state.averageDailyReels),
                             avgDurationMs: state.averageDailyDurationMs
                         )
+
+                        // Reels by App Section (Period Breakdown by Ranking)
+                        if !state.appBreakdown.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "chart.bar.xaxis")
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.accentColor)
+                                    Text("App Ranking (\(selectedDays)d)")
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                }
+
+                                ForEach(Array(state.appBreakdown.enumerated()), id: \.element.appId) { index, item in
+                                    let rank = index + 1
+                                    let share = state.totalReels > 0 ? min(max(Double(item.reels) / Double(state.totalReels), 0.0), 1.0) : 0.0
+                                    let percentText = "\(Int(share * 100))%"
+                                    let displayName = TrackedAppCatalog.shared.getDisplayName(packageOrId: item.appId)
+                                    let accentColor = appAccentColor(item.appId, rank: rank)
+                                    let badgeColor = rankBadgeColor(rank)
+
+                                    VStack(spacing: 8) {
+                                        HStack {
+                                            HStack(spacing: 8) {
+                                                Text("#\(rank)")
+                                                    .font(.system(size: 11, weight: .bold))
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 3)
+                                                    .background(badgeColor.opacity(0.18), in: Capsule())
+                                                    .foregroundStyle(badgeColor)
+
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text(displayName)
+                                                        .font(.headline)
+                                                        .foregroundStyle(.primary)
+                                                    Text(formatDuration(item.durationMs))
+                                                        .font(.caption)
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                            }
+
+                                            Spacer()
+
+                                            VStack(alignment: .trailing, spacing: 2) {
+                                                Text("\(item.reels) reels")
+                                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                    .foregroundStyle(accentColor)
+                                                Text(percentText)
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+
+                                        GeometryReader { geometry in
+                                            ZStack(alignment: .leading) {
+                                                Capsule()
+                                                    .fill(Color(uiColor: .tertiarySystemFill))
+                                                    .frame(height: 6)
+                                                Capsule()
+                                                    .fill(accentColor)
+                                                    .frame(width: max(geometry.size.width * CGFloat(share), 0), height: 6)
+                                            }
+                                        }
+                                        .frame(height: 6)
+                                    }
+                                    .padding(14)
+                                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                }
+                            }
+                        }
 
                         // Daily Breakdown Section
                         VStack(alignment: .leading, spacing: 12) {
@@ -107,6 +177,46 @@ struct StatsView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Trends")
             .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func formatDuration(_ ms: Int64) -> String {
+        let totalSeconds = ms / 1000
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if minutes > 0 {
+            return "\(minutes)m"
+        } else {
+            return "\(seconds)s"
+        }
+    }
+
+    private func rankBadgeColor(_ rank: Int) -> Color {
+        switch rank {
+        case 1: return Color(red: 0.96, green: 0.65, blue: 0.14) // Gold
+        case 2: return Color(red: 0.55, green: 0.61, blue: 0.68) // Silver
+        case 3: return Color(red: 0.80, green: 0.50, blue: 0.35) // Bronze
+        default: return Color.secondary
+        }
+    }
+
+    private func appAccentColor(_ appId: String, rank: Int) -> Color {
+        let lower = appId.lowercased()
+        if lower.contains("instagram") || lower.contains("instander") { return Color(red: 0.88, green: 0.19, blue: 0.42) }
+        if lower.contains("youtube") { return Color(red: 1.0, green: 0.0, blue: 0.0) }
+        if lower.contains("musically") || lower.contains("tiktok") { return Color(red: 0.0, green: 0.81, blue: 0.79) }
+        if lower.contains("snapchat") { return Color(red: 1.0, green: 0.73, blue: 0.0) }
+        if lower.contains("facebook") || lower.contains("katana") { return Color(red: 0.09, green: 0.47, blue: 0.95) }
+        if lower.contains("reddit") { return Color(red: 1.0, green: 0.27, blue: 0.0) }
+        switch rank {
+        case 1: return Color.accentColor
+        case 2: return Color.teal
+        case 3: return Color.orange
+        default: return Color.secondary
         }
     }
 }
