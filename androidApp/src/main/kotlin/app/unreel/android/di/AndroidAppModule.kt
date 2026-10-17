@@ -47,10 +47,21 @@ val androidAppModule: Module = module {
         AndroidOverlayController(context = context)
     }
 
+    single<app.unreel.android.platform.DynamicIslandOverlayController> {
+        val context = runCatching { androidContext() }.getOrNull()
+        app.unreel.android.platform.AndroidDynamicIslandOverlayController(context = context)
+    }
+
     single { AndroidOverlayEnforcer(overlayController = get()) }
     single<Enforcer> { get<AndroidOverlayEnforcer>() }
 
-    single { AndroidLiveSurfacePublisher(context = runCatching { androidContext() }.getOrNull()) }
+    single {
+        AndroidLiveSurfacePublisher(
+            context = runCatching { androidContext() }.getOrNull(),
+            snapshotPublisher = getOrNull(),
+            clock = get(),
+        )
+    }
     single<LiveSurfacePublisher> { get<AndroidLiveSurfacePublisher>() }
 
     single { AndroidScrollEventSource() }

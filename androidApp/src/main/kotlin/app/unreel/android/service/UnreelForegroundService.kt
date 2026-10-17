@@ -41,6 +41,7 @@ class UnreelForegroundService : Service(), KoinComponent {
 
     private val liveSurfacePublisher: AndroidLiveSurfacePublisher by inject()
     private val overlayEnforcer: AndroidOverlayEnforcer by inject()
+    private val dynamicIslandController: app.unreel.android.platform.DynamicIslandOverlayController by inject()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -56,6 +57,7 @@ class UnreelForegroundService : Service(), KoinComponent {
         if (action == ACTION_STOP) {
             logger.i { "Stop action received, stopping foreground service" }
             _isRunning.value = false
+            dynamicIslandController.hide()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
@@ -98,6 +100,17 @@ class UnreelForegroundService : Service(), KoinComponent {
                 )
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.notify(NOTIFICATION_ID, notification)
+
+                if (shouldShowDynamicIsland(surfaceState, decision)) {
+                    dynamicIslandController.showOrUpdate(
+                        sessionReels = surfaceState.sessionReels,
+                        todayReels = surfaceState.todayReels,
+                        todayDurationMs = surfaceState.todayDurationMs,
+                        limitProgress = surfaceState.limitProgress,
+                    )
+                } else {
+                    dynamicIslandController.hide()
+                }
             }
         }
     }
@@ -105,6 +118,7 @@ class UnreelForegroundService : Service(), KoinComponent {
     override fun onDestroy() {
         super.onDestroy()
         _isRunning.value = false
+        dynamicIslandController.hide()
         logger.i { "UnreelForegroundService destroyed" }
         serviceScope.cancel()
     }
@@ -145,6 +159,10 @@ class UnreelForegroundService : Service(), KoinComponent {
                 val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.createNotificationChannel(channel)
             }
+        }
+
+        fun shouldShowDynamicIsland(surfaceState: SurfaceState, decision: Decision): Boolean {
+            return decision !is Decision.Block && surfaceState.isSessionActive && surfaceState.sessionReels > 0
         }
 
         fun formatDuration(durationMs: Long): String {

@@ -85,6 +85,33 @@ class UnreelForegroundServiceTest {
     }
 
     @Test
+    fun `shouldShowDynamicIsland returns true only when active with positive reels and not blocked`() {
+        val activeState = SurfaceState(
+            sessionReels = 5,
+            todayReels = 20,
+            todayDurationMs = 120_000L,
+            limitProgress = 0.5f,
+            isSessionActive = true,
+        )
+        assertTrue(UnreelForegroundService.shouldShowDynamicIsland(activeState, Decision.Allow))
+
+        val blockedDecision = Decision.Block(
+            until = null,
+            reason = "Blocked",
+            ruleId = "rule-1",
+            canBypass = false,
+            passesRemaining = 0,
+        )
+        assertEquals(false, UnreelForegroundService.shouldShowDynamicIsland(activeState, blockedDecision))
+
+        val inactiveState = activeState.copy(isSessionActive = false)
+        assertEquals(false, UnreelForegroundService.shouldShowDynamicIsland(inactiveState, Decision.Allow))
+
+        val zeroReelState = activeState.copy(sessionReels = 0)
+        assertEquals(false, UnreelForegroundService.shouldShowDynamicIsland(zeroReelState, Decision.Allow))
+    }
+
+    @Test
     fun `action constants are correctly defined`() {
         assertEquals("app.unreel.android.action.START_MONITORING", UnreelForegroundService.ACTION_START)
         assertEquals("app.unreel.android.action.STOP_MONITORING", UnreelForegroundService.ACTION_STOP)

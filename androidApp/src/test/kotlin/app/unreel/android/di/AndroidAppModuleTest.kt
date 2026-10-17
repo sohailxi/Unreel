@@ -62,6 +62,7 @@ class AndroidAppModuleTest : KoinTest {
         assertNotNull(enforcer)
         assertNotNull(get<AndroidOverlayEnforcer>())
         assertNotNull(get<app.unreel.android.platform.OverlayController>())
+        assertNotNull(get<app.unreel.android.platform.DynamicIslandOverlayController>())
 
         val publisher = get<LiveSurfacePublisher>()
         assertNotNull(publisher)
